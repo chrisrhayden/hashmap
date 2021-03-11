@@ -1,14 +1,17 @@
 CC=gcc
-CFLAGS=-Wall -ggdb3 -pedantic
+CFLAGS=-Wall -g -pedantic
 
 SRC = $(wildcard ./src/*.c)
 
+TEST_SRC = $(wildcard ./test/*.c)
+
 TARGET_NAME = ./out/target_build
 
-LIBS=-L./libs/ -lspookyhash
+LIBS=-I./lib/spookyhash -L./lib/spookyhash -lspookyhash
 
 build: $(SRC)
-	$(CC) $(CFLAGS) $^ $(LIBS) -o $(TARGET_NAME)
+	$(CC) $(CFLAGS) -c $^ $(LIBS) -o ./out/hashmap.o
 
-run: build
-	./out/target_build
+test: build
+	$(CC) $(CFLAGS) $(TEST_SRC) ./out/hashmap.o $(LIBS) -o ./out/test
+	./out/test
