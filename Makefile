@@ -7,11 +7,15 @@ TEST_SRC = $(wildcard ./test/*.c)
 
 TARGET_NAME = ./out/target_build
 
-LIBS=-I./lib/spookyhash -L./lib/spookyhash -lspookyhash
+OBJ_NAME = ./out/hashmap.o
+
+STD_LIBS = -lm
 
 build: $(SRC)
-	$(CC) $(CFLAGS) -c $^ $(LIBS) -o ./out/hashmap.o
+	$(CC) $(CFLAGS) -c $^ $(STD_LIBS) -o ./out/hashmap.o
 
 test: build
-	$(CC) $(CFLAGS) $(TEST_SRC) ./out/hashmap.o $(LIBS) -o ./out/test
+	$(CC) $(CFLAGS) $(TEST_SRC) $(OBJ_NAME) $(STD_LIBS) -o ./out/test
+
+run_test: test
 	./out/test
