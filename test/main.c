@@ -1,22 +1,27 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 
 #include "../src/hashmap.h"
 
 void drop_value(void *value) {
+    free(value);
     return;
 }
 
 int main() {
     HashMap *map = create_hashmap();
 
-    uint64_t whatever = 10;
+    uint64_t *value = NULL;
+
     uint64_t iter_count = 10000;
 
     for (uint64_t i = 0; i < iter_count; ++i) {
 
-        if (insert_hashmap(map, i, &whatever) != Success) {
+        value = (uint64_t *)malloc(sizeof(uint64_t));
+
+        *value = i;
+
+        if (insert_hashmap(map, i, value) != Success) {
             printf("bad insert\n");
         }
     }
