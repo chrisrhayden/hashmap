@@ -10,9 +10,9 @@ uint64_t key_hash(const MapPoint *point) {
 }
 
 int main() {
-    HAHSMAP(MapPoint *, uint64_t *) map;
+    HAHSMAP(MapPoint, uint64_t *) map;
 
-    init_hashmap(&map, key_hash);
+    init_hashmap(map, key_hash);
 
     return 0;
 }

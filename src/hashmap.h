@@ -17,24 +17,23 @@ enum HashMapResult {
         struct {                                                               \
             const key_type *key_t;                                             \
             data_type *data_t;                                                 \
+            uint64_t (*hash_func_t)(const key_type *);                         \
         } data_types;                                                          \
     }
 
 #define init_hashmap(hashmap, hash_func)                                       \
     do {                                                                       \
-        init_hashmap_base(*(hashmap.map_base), (HashFunc)hash_func);           \
+        typeof(hashmap.data_types.hash_func_t) _hash_func = hash_func;         \
+        hashmap.map_base = malloc(sizeof(HashMapBase));                        \
+        init_hashmap_base(hashmap.map_base, (HashFunc)_hash_func);             \
     } while (0)
 
 /** iterate over the hash map (unsafe)
  *
  * call iter_next_hashmap() in a loop until the iter index is the same or larger
- * the table size
- *
- * iter_next_hashmap will assign the `key` and `value` to the user provided
- * variables
- *
- * restart the iterator every time for_each is called by setting the
- * current_index to zero every time this is called/expanded
+ * the table size iter_next_hashmap will assign the `key` and `value` to the
+ * user provided *variables restart the iterator every time for_each is called
+ * by setting the *current_index to zero every time this is called expanded
  */
 #define for_each(iter, key, value)                                             \
     iter->current_index = 0;                                                   \

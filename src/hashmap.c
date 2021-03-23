@@ -1,4 +1,5 @@
 #include "hashmap_base.h"
+#include <stdio.h>
 
 #define STARTING_SIZE 1024
 #define GROWTH_FACTOR 2
@@ -42,7 +43,7 @@ uint64_t integer_hash64(uint64_t x) {
     return x;
 }
 
-bool init_hasemap_base(HashMapBase *map, HashFunc hash_func) {
+bool init_hashmap_base(HashMapBase *map, HashFunc hash_func) {
     map->table_size = STARTING_SIZE;
     map->table = (Entry **)calloc(sizeof(Entry *), STARTING_SIZE);
 
