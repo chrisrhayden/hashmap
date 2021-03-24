@@ -21,6 +21,8 @@ typedef uint64_t (*HashFunc)(const void *key);
  */
 typedef void (*DropValueFunc)(void *value);
 
+typedef bool (*CompFunc)(const void *key_1, const void *key_2);
+
 /* a way to signal what went wrong */
 enum HashMapResult {
     FailedToInsert,
@@ -43,6 +45,7 @@ typedef struct {
     Entry **table;
     HashFunc hash_func;
     DropValueFunc drop_func;
+    CompFunc comp_func;
 } HashMapBase;
 
 /* the iteration data */
@@ -56,7 +59,7 @@ typedef struct {
 } IterHashMap;
 
 HashMapBase *init_hashmap_base(HashFunc hash_func, DropValueFunc drop_func,
-                               uint64_t size);
+                               CompFunc comp_func, uint64_t size);
 
 void drop_hashmap_base(HashMapBase *map);
 

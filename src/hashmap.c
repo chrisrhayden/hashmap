@@ -41,8 +41,10 @@ uint64_t integer_hash64(uint64_t x) {
     return x;
 }
 
+/* init/create the hashmap base
+ */
 HashMapBase *init_hashmap_base(HashFunc hash_func, DropValueFunc drop_func,
-                               uint64_t size) {
+                               CompFunc comp_func, uint64_t size) {
     HashMapBase *map = malloc(sizeof(*map));
 
     map->table_size = size;
@@ -56,6 +58,7 @@ HashMapBase *init_hashmap_base(HashFunc hash_func, DropValueFunc drop_func,
 
     map->hash_func = hash_func;
     map->drop_func = drop_func;
+    map->comp_func = comp_func;
 
     return map;
 }
@@ -99,11 +102,6 @@ void drop_hashmap_base(HashMapBase *map) {
 
     free(map);
 }
-
-/* create a new hashmap base
- *
- * this is mostly for resizing
- */
 
 /** create an entry struct */
 Entry *create_entry(const void *key, void *value) {
@@ -157,7 +155,7 @@ enum HashMapResult _insert_hashmap(HashMapBase *map, const void *key,
     // to the last key check
     // else we check the key in the loop
     while (table_entry->next != NULL && !found) {
-        if (table_entry->key == key) {
+        if (map->comp_func(table_entry->key, key)) {
             found = true;
         } else {
             table_entry = table_entry->next;
@@ -165,7 +163,7 @@ enum HashMapResult _insert_hashmap(HashMapBase *map, const void *key,
     }
 
     // check the last (or first) entry in the list
-    if (found || table_entry->key == key) {
+    if (found || map->comp_func(table_entry->key, key)) {
         return FailedToInsertDuplicate;
     }
 
@@ -191,8 +189,8 @@ enum HashMapResult rehash_hashmap(HashMapBase *map) {
 
     int new_table_size = map->table_size * GROWTH_FACTOR;
 
-    HashMapBase *temp_map =
-        init_hashmap_base(map->hash_func, map->drop_func, new_table_size);
+    HashMapBase *temp_map = init_hashmap_base(map->hash_func, map->drop_func,
+                                              map->comp_func, new_table_size);
 
     if (temp_map == NULL) {
         // this is technically true i guess
@@ -217,23 +215,19 @@ enum HashMapResult rehash_hashmap(HashMapBase *map) {
         drop_hashmap_base(temp_map);
 
     } else { // assign the new table to the user's hashmap
-
         // drop the old table but dont drop the values
-        drop_table(map);
+        free(map->table);
 
         // set the new table to the old hashmap
         map->table = temp_map->table;
         map->table_size = temp_map->table_size;
-
-        // this should be the same no mater what
-        map->current_size = temp_map->current_size;
 
         // ignore the temp table when dropping as its now the new table for the
         // users map
         temp_map->table = NULL;
 
         // drop the temp map
-        drop_hashmap_base(temp_map);
+        free(temp_map);
 
         // this is probably redundant
         result = Success;
@@ -284,7 +278,7 @@ bool contains_key_hashmap_base(HashMapBase *map, const void *key) {
     Entry *entry = map->table[key_hash];
 
     while (entry != NULL && !found) {
-        if (entry->key == key) {
+        if (map->comp_func(entry->key, key)) {
             found = true;
         } else {
             entry = entry->next;
@@ -305,7 +299,8 @@ void *remove_entry_hashmap_base(HashMapBase *map, const void *key) {
     Entry *prev;
     Entry *entry = map->table[key_hash];
 
-    if (entry && entry->key == key) {
+    if (entry && map->comp_func(entry->key, key)) {
+
         stop = true;
 
         map->table[key_hash] = entry->next;
@@ -320,10 +315,11 @@ void *remove_entry_hashmap_base(HashMapBase *map, const void *key) {
     }
 
     prev = entry;
-    entry = entry->next;
+    // entry = entry->next;
+    entry = NULL;
 
     while (entry && !stop) {
-        if (entry->key == key) {
+        if (map->comp_func(entry->key, key)) {
             stop = true;
 
             value = entry->value;

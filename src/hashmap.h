@@ -18,6 +18,7 @@
             data_type *value_t;                                                \
             uint64_t (*hash_func_t)(const key_type *);                         \
             void (*drop_func_t)(data_type *);                                  \
+            bool (*compare_func_t)(const key_type *, const key_type *);        \
         } _data_types;                                                         \
     } name
 
@@ -29,28 +30,30 @@
  *   HashMap *map;
  *   init_hashmap(map, hash_func, drop_func);
  */
-#define init_hashmap(hashmap, hash_func, drop_func)                            \
+#define init_hashmap(hashmap, hash_func, drop_func, comp_func)                 \
     do {                                                                       \
         typeof(hashmap->_data_types.hash_func_t) _hash_func = hash_func;       \
                                                                                \
         typeof(hashmap->_data_types.drop_func_t) _drop_func = drop_func;       \
                                                                                \
+        typeof(hashmap->_data_types.compare_func_t) _comp_func = comp_func;    \
+                                                                               \
         hashmap = (typeof(hashmap))malloc(sizeof(*hashmap));                   \
                                                                                \
         if (hashmap != NULL) {                                                 \
-            hashmap->map_base =                                                \
-                init_hashmap_base((HashFunc)_hash_func,                        \
-                                  (DropValueFunc)_drop_func, STARTING_SIZE);   \
+            hashmap->map_base = init_hashmap_base(                             \
+                (HashFunc)_hash_func, (DropValueFunc)_drop_func,               \
+                (CompFunc)_comp_func, STARTING_SIZE);                          \
         }                                                                      \
     } while (0)
 
-#define insert_hashmap(hashmap, key, value)                                    \
+#define insert_hashmap(hashmap, key, value, success)                           \
     do {                                                                       \
         typeof(hashmap->_data_types.key_t) _key = key;                         \
         typeof(hashmap->_data_types.value_t) _value = value;                   \
                                                                                \
-        insert_hashmap_base(hashmap->map_base, (const void *)_key,             \
-                            (void *)_value);                                   \
+        success = insert_hashmap_base(hashmap->map_base, (const void *)_key,   \
+                                      (void *)_value);                         \
     } while (0)
 
 #define drop_hashmap(hashmap)                                                  \
@@ -64,7 +67,7 @@
     do {                                                                       \
         typeof(hashmap->_data_types.key_t) _key = key;                         \
                                                                                \
-        *contains =                                                            \
+        contains =                                                             \
             contains_key_hashmap_base(hashmap->map_base, (const void *)_key);  \
     } while (0)
 
