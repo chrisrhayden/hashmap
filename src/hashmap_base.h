@@ -19,7 +19,8 @@ typedef uint64_t (*HashFunc)(const void *key);
  *
  * if the function is null then the value is not dropped
  */
-typedef void (*DropValueFunc)(void *value);
+// typedef void (*DropValueFunc)(void *value);
+typedef void (*DropValueFunc)(void *key, void *value);
 
 typedef bool (*CompFunc)(const void *key_1, const void *key_2);
 
@@ -71,6 +72,7 @@ void *remove_entry_hashmap_base(HashMapBase *map, const void *key);
 bool contains_key_hashmap_base(HashMapBase *map, const void *key);
 
 IterHashMap *get_iter_hashmap_base(HashMapBase *map);
+void drop_iter_hashmap(IterHashMap *iter);
 
 void iter_next_hashmap(IterHashMap *iter, const void **key, void **value);
 void iter_next_safe_hashmap(IterHashMap *iter, const void **key, void **value);

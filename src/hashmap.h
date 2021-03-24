@@ -15,9 +15,9 @@
         HashMapBase *map_base;                                                 \
         struct {                                                               \
             const key_type *key_t;                                             \
-            data_type *value_t;                                                \
+            data_type *data_t;                                                 \
             uint64_t (*hash_func_t)(const key_type *);                         \
-            void (*drop_func_t)(data_type *);                                  \
+            void (*drop_func_t)(key_type *, data_type *);                      \
             bool (*compare_func_t)(const key_type *, const key_type *);        \
         } _data_types;                                                         \
     } name
@@ -25,6 +25,12 @@
 /* allocate memory for the  given hashmap;
  *
  * this will allocate all the needed memory for a given hashmap
+ *
+ * the do {} while(0) is too allow the user to use the macro like a regular
+ * function/statement including ending with a semicolon
+ *
+ * see this stackoverflow https://stackoverflow.com/questions/1067226/
+ * c-multi-line-macro-do-while0-vs-scope-block
  *
  * use:
  *   HashMap *map;
@@ -47,20 +53,27 @@
         }                                                                      \
     } while (0)
 
-#define insert_hashmap(hashmap, key, value, success)                           \
-    do {                                                                       \
-        typeof(hashmap->_data_types.key_t) _key = key;                         \
-        typeof(hashmap->_data_types.value_t) _value = value;                   \
-                                                                               \
-        success = insert_hashmap_base(hashmap->map_base, (const void *)_key,   \
-                                      (void *)_value);                         \
-    } while (0)
-
+/* drop the hashmap freeing all its memory
+ *
+ * this will end up calling the drop_func from the hash map to free all the
+ * values
+ */
 #define drop_hashmap(hashmap)                                                  \
     do {                                                                       \
         drop_hashmap_base(hashmap->map_base);                                  \
                                                                                \
         free(hashmap);                                                         \
+    } while (0)
+
+/* insert a key and value in to the hashmap
+ */
+#define insert_hashmap(hashmap, key, value, success)                           \
+    do {                                                                       \
+        typeof(hashmap->_data_types.key_t) _key = key;                         \
+        typeof(hashmap->_data_types.data_t) _value = value;                    \
+                                                                               \
+        success = insert_hashmap_base(hashmap->map_base, (const void *)_key,   \
+                                      (void *)_value);                         \
     } while (0)
 
 #define contains_key_hashmap(hashmap, key, contains)                           \
@@ -75,11 +88,15 @@
     do {                                                                       \
         typeof(hashmap->_data_types.key_t) _key = key;                         \
                                                                                \
-        value_to_fill = remove_entry_hashmap_base(hashmap->map_base, _key);    \
+        typeof(hashmap->_data_types.data_t) *_value = &value_to_fill;          \
+                                                                               \
+        *_value = remove_entry_hashmap_base(hashmap->map_base, _key);          \
     } while (0)
 
 #define get_iter_hashmap(hashmap, iter)                                        \
     iter = get_iter_hashmap_base(hashmap->map_base);
+
+// #define drop_iter(iter) drop_iter(iter)
 
 /** iterate over the hash map (unsafe)
  *

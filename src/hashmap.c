@@ -80,7 +80,7 @@ void drop_table(HashMapBase *map) {
 
         while (entry != NULL) {
             if (map->drop_func && entry->value) {
-                map->drop_func(entry->value);
+                map->drop_func((void *)entry->key, entry->value);
             }
 
             temp = entry->next;
@@ -307,6 +307,7 @@ void *remove_entry_hashmap_base(HashMapBase *map, const void *key) {
 
         value = entry->value;
 
+        map->drop_func((void *)entry->key, NULL);
         free(entry);
 
         entry = NULL;
@@ -315,7 +316,6 @@ void *remove_entry_hashmap_base(HashMapBase *map, const void *key) {
     }
 
     prev = entry;
-    // entry = entry->next;
     entry = NULL;
 
     while (entry && !stop) {
@@ -323,9 +323,9 @@ void *remove_entry_hashmap_base(HashMapBase *map, const void *key) {
             stop = true;
 
             value = entry->value;
-
             prev->next = entry->next;
 
+            map->drop_func((void *)entry->key, NULL);
             free(entry);
 
             entry = NULL;
