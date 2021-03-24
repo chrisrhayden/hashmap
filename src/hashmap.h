@@ -3,29 +3,62 @@
 
 #include "hashmap_base.h"
 
-/* a way to signal what went wrong */
-enum HashMapResult {
-    FailedToInsert,
-    FailedToInsertNoMemory,
-    FailedToInsertDuplicate,
-    Success,
-};
-
-#define HAHSMAP(key_type, data_type)                                           \
-    struct {                                                                   \
+/* a macro to define a (kinda) type safe hashmap
+ *
+ * the map_base  struct is the actual hashmap
+ *
+ * the _data_types struct is to allow for checking the types in the macro
+ * interface and will not receive values
+ */
+#define HAHSMAP(name, key_type, data_type)                                     \
+    typedef struct {                                                           \
         HashMapBase *map_base;                                                 \
         struct {                                                               \
             const key_type *key_t;                                             \
-            data_type *data_t;                                                 \
+            data_type *value_t;                                                \
             uint64_t (*hash_func_t)(const key_type *);                         \
-        } data_types;                                                          \
-    }
+            void (*drop_func_t)(data_type *);                                  \
+        } _data_types;                                                         \
+    } name
 
-#define init_hashmap(hashmap, hash_func)                                       \
+/* allocate memory for the  given hashmap;
+ *
+ * this will allocate all the needed memory for a given hashmap
+ *
+ * use:
+ *   HashMap *map;
+ *   init_hashmap(map, hash_func, drop_func);
+ */
+#define init_hashmap(hashmap, hash_func, drop_func)                            \
     do {                                                                       \
-        typeof(hashmap.data_types.hash_func_t) _hash_func = hash_func;         \
-        hashmap.map_base = malloc(sizeof(HashMapBase));                        \
-        init_hashmap_base(hashmap.map_base, (HashFunc)_hash_func);             \
+        typeof(hashmap->_data_types.hash_func_t) _hash_func = hash_func;       \
+                                                                               \
+        typeof(hashmap->_data_types.drop_func_t) _drop_func = drop_func;       \
+                                                                               \
+        hashmap = (typeof(hashmap))malloc(sizeof(*hashmap));                   \
+                                                                               \
+        if (hashmap != NULL) {                                                 \
+            hashmap->map_base =                                                \
+                init_hashmap_base((HashFunc)_hash_func,                        \
+                                  (DropValueFunc)_drop_func, STARTING_SIZE);   \
+        }                                                                      \
+    } while (0)
+
+#define insert_hashmap(hashmap, key, value)                                    \
+    do {                                                                       \
+        typeof(hashmap->_data_types.key_t) _key = key;                         \
+        typeof(hashmap->_data_types.value_t) _value = value;                   \
+                                                                               \
+        insert_hashmap(hashmap->map_base, (const void *)_key, (void *)_value); \
+    } while (0)
+
+#define contains_key_hashmap(hashmap, key, success)                            \
+    do {                                                                       \
+        *success = false;                                                      \
+        typeof(hashmap->_data_types.key_t) _key = key;                         \
+                                                                               \
+        *success =                                                             \
+            contains_key_hashmap(hashmap->map_base, (const void *)_key);       \
     } while (0)
 
 /** iterate over the hash map (unsafe)
