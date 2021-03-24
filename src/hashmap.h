@@ -49,16 +49,30 @@
         typeof(hashmap->_data_types.key_t) _key = key;                         \
         typeof(hashmap->_data_types.value_t) _value = value;                   \
                                                                                \
-        insert_hashmap(hashmap->map_base, (const void *)_key, (void *)_value); \
+        insert_hashmap_base(hashmap->map_base, (const void *)_key,             \
+                            (void *)_value);                                   \
     } while (0)
 
-#define contains_key_hashmap(hashmap, key, success)                            \
+#define drop_hashmap(hashmap)                                                  \
     do {                                                                       \
-        *success = false;                                                      \
+        drop_hashmap_base(hashmap->map_base);                                  \
+                                                                               \
+        free(hashmap);                                                         \
+    } while (0)
+
+#define contains_key_hashmap(hashmap, key, contains)                           \
+    do {                                                                       \
         typeof(hashmap->_data_types.key_t) _key = key;                         \
                                                                                \
-        *success =                                                             \
-            contains_key_hashmap(hashmap->map_base, (const void *)_key);       \
+        *contains =                                                            \
+            contains_key_hashmap_base(hashmap->map_base, (const void *)_key);  \
+    } while (0)
+
+#define remove_entry_hashmap(hashmap, key, value_to_fill)                      \
+    do {                                                                       \
+        typeof(hashmap->_data_types.key_t) _key = key;                         \
+                                                                               \
+        value_to_fill = remove_entry_hashmap_base(hashmap->map_base, _key);    \
     } while (0)
 
 /** iterate over the hash map (unsafe)

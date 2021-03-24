@@ -58,14 +58,13 @@ typedef struct {
 HashMapBase *init_hashmap_base(HashFunc hash_func, DropValueFunc drop_func,
                                uint64_t size);
 
-// void drop_hashmap(HashMap *map, DropValueFunc drop_func);
+void drop_hashmap_base(HashMapBase *map);
 
-enum HashMapResult insert_hashmap(HashMapBase *map, const void *, void *value);
+enum HashMapResult insert_hashmap_base(HashMapBase *map, const void *,
+                                       void *value);
 
-// bool remove_entry_hashmap(HashMap *map, uint64_t key);
+void *remove_entry_hashmap_base(HashMapBase *map, const void *key);
 
-bool contains_key_hashmap(HashMapBase *map, const void *key);
+bool contains_key_hashmap_base(HashMapBase *map, const void *key);
 
-/** delete an entry and return the value */
-// void *delete_entry_hashmap(HashMap *map, uint64_t key);
 #endif

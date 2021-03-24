@@ -44,6 +44,7 @@ uint64_t integer_hash64(uint64_t x) {
 HashMapBase *init_hashmap_base(HashFunc hash_func, DropValueFunc drop_func,
                                uint64_t size) {
     HashMapBase *map = malloc(sizeof(*map));
+
     map->table_size = size;
     map->table = (Entry **)calloc(sizeof(Entry *), size);
 
@@ -54,6 +55,7 @@ HashMapBase *init_hashmap_base(HashFunc hash_func, DropValueFunc drop_func,
     map->current_size = 0;
 
     map->hash_func = hash_func;
+    map->drop_func = drop_func;
 
     return map;
 }
@@ -74,10 +76,6 @@ void drop_table(HashMapBase *map) {
         entry = map->table[i];
 
         while (entry != NULL) {
-            if (entry->key) {
-                free((void *)entry->key);
-            }
-
             if (map->drop_func && entry->value) {
                 map->drop_func(entry->value);
             }
@@ -94,7 +92,7 @@ void drop_table(HashMapBase *map) {
 }
 
 /** drop the whole hashmap */
-void drop_hashmap(HashMapBase *map) {
+void drop_hashmap_base(HashMapBase *map) {
     if (map->table) {
         drop_table(map);
     }
@@ -183,11 +181,9 @@ enum HashMapResult _insert_hashmap(HashMapBase *map, const void *key,
 
 /** rehash the whole table
  *
- * this will rehash the whole table to a bigger size based on the
- GROWTH_FACTOR
+ * this will rehash the whole table to a bigger size based on the GROWTH_FACTOR
  *
- * it would be faster to just give the new table the old entrys but this
- is
+ * it would be faster to just give the new table the old entrys but this is
  * fine for now
  */
 enum HashMapResult rehash_hashmap(HashMapBase *map) {
@@ -218,7 +214,7 @@ enum HashMapResult rehash_hashmap(HashMapBase *map) {
 
     // if there was an error drop the temp and let the user know
     if (result != Success) {
-        drop_hashmap(temp_map);
+        drop_hashmap_base(temp_map);
 
     } else { // assign the new table to the user's hashmap
 
@@ -237,7 +233,7 @@ enum HashMapResult rehash_hashmap(HashMapBase *map) {
         temp_map->table = NULL;
 
         // drop the temp map
-        drop_hashmap(temp_map);
+        drop_hashmap_base(temp_map);
 
         // this is probably redundant
         result = Success;
@@ -251,8 +247,8 @@ enum HashMapResult rehash_hashmap(HashMapBase *map) {
  * this will rehash the table when the current size is the same as the table
  * length * MAX_LOAD_FACTOR
  */
-enum HashMapResult insert_hashmap(HashMapBase *map, const void *key,
-                                  void *value) {
+enum HashMapResult insert_hashmap_base(HashMapBase *map, const void *key,
+                                       void *value) {
     enum HashMapResult result = Success;
 
     // check if we need to resize
@@ -280,7 +276,7 @@ enum HashMapResult insert_hashmap(HashMapBase *map, const void *key,
 }
 
 // check is a key is in the table
-bool contains_key_hashmap(HashMapBase *map, const void *key) {
+bool contains_key_hashmap_base(HashMapBase *map, const void *key) {
     uint64_t key_hash = map->hash_func(key) & (map->table_size - 1);
 
     bool found = false;
@@ -298,55 +294,55 @@ bool contains_key_hashmap(HashMapBase *map, const void *key) {
     return found;
 }
 
-// /** delete the entry for the given key */
-// void *delete_entry_hashmap(HashMap *map, uint64_t key) {
-//     uint64_t key_hash = hash64(map, key);
-//
-//     bool stop = false;
-//
-//     void *value = NULL;
-//
-//     Entry *prev;
-//     Entry *entry = map->table[key_hash];
-//
-//     if (entry && entry->key == key) {
-//         stop = true;
-//
-//         map->table[key_hash] = entry->next;
-//
-//         value = entry->value;
-//
-//         free(entry);
-//
-//         entry = NULL;
-//
-//         return value;
-//     }
-//
-//     prev = entry;
-//     entry = entry->next;
-//
-//     while (entry && !stop) {
-//         if (entry->key == key) {
-//             stop = true;
-//
-//             value = entry->value;
-//
-//             prev->next = entry->next;
-//
-//             free(entry);
-//
-//             entry = NULL;
-//         } else {
-//             prev = entry;
-//
-//             entry = entry->next;
-//         }
-//     }
-//
-//     return value;
-// }
-//
+/** delete the entry for the given key */
+void *remove_entry_hashmap_base(HashMapBase *map, const void *key) {
+    uint64_t key_hash = map->hash_func(key) & (map->table_size - 1);
+
+    bool stop = false;
+
+    void *value = NULL;
+
+    Entry *prev;
+    Entry *entry = map->table[key_hash];
+
+    if (entry && entry->key == key) {
+        stop = true;
+
+        map->table[key_hash] = entry->next;
+
+        value = entry->value;
+
+        free(entry);
+
+        entry = NULL;
+
+        return value;
+    }
+
+    prev = entry;
+    entry = entry->next;
+
+    while (entry && !stop) {
+        if (entry->key == key) {
+            stop = true;
+
+            value = entry->value;
+
+            prev->next = entry->next;
+
+            free(entry);
+
+            entry = NULL;
+        } else {
+            prev = entry;
+
+            entry = entry->next;
+        }
+    }
+
+    return value;
+}
+
 // /** get an iterator for a hashmap
 //  *
 //  * this is definitely not thread safe
