@@ -79,14 +79,49 @@ int main() {
 
     bool contains = false;
 
-    for (int i = 1; i < iter_count; ++i) {
-        MapPoint *key = create_map_point(i, i + i);
+    // for (int i = 1; i < iter_count; ++i) {
+    //     MapPoint *key = create_map_point(i, i + i);
+    //     contains_key_hashmap(map, key, contains);
+    //     if (contains == false) {
+    //         break;
+    //     }
+    // }
 
+    IterHashMap *iter;
+
+    get_iter_hashmap(map, iter);
+
+    MapPoint *key;
+    uint64_t *value;
+
+    contains = false;
+
+    for_each(iter, key, value) {
         contains_key_hashmap(map, key, contains);
 
         if (contains == false) {
             break;
         }
+    }
+
+    if (contains == true) {
+        printf("found all\n");
+    }
+
+    key = NULL;
+    value = NULL;
+    contains = false;
+
+    for_each_safe(iter, key, value) {
+        contains_key_hashmap(map, key, contains);
+
+        if (contains == false) {
+            break;
+        }
+    }
+
+    if (contains == true) {
+        printf("found all safe\n");
     }
 
     if (contains != false) {
