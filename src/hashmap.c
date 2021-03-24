@@ -339,144 +339,129 @@ void *remove_entry_hashmap_base(HashMapBase *map, const void *key) {
     return value;
 }
 
-// /** get an iterator for a hashmap
-//  *
-//  * this is definitely not thread safe
-//  */
-// IterHashMap *get_iter_hashmap(HashMap *map) {
-//     IterHashMap *iter = (IterHashMap *)malloc(sizeof(IterHashMap));
-//
-//     if (iter == NULL) {
-//         return NULL;
-//     }
-//
-//     iter->current_index = -1;
-//
-//     iter->current_entry = NULL;
-//
-//     iter->prev_entry = NULL;
-//
-//     iter->prev_index = -1;
-//
-//     iter->table_size = map->table_size;
-//
-//     iter->iter_table = map->table;
-//
-//     return iter;
-// }
-//
-// void drop_iter_hashmap(IterHashMap *iter) {
-//     free(iter);
-// }
-//
-// /** next safe
-//  *
-//  * this will keep track of a previous entry and make sure that we get to
-//  the
-//  * right entry even if the user deletes an entry
-//  */
-// void iter_next_safe_hashmap(IterHashMap *iter, uint64_t *key, void
-// **value) {
-//     // if there is a previous entry and it has the same index as the
-//     current
-//     // entry then reset current to the last entry so we get to the right
-//     entry
-//     // in the next if even if the user removed an entry diuring iteration
-//     //
-//     // this is bad and i feel bad
-//     if (iter->prev_entry && iter->prev_index == iter->current_index) {
-//         iter->current_entry = iter->prev_entry;
-//     }
-//
-//     // if current entry is not null then try and get the next Entry from
-//     the
-//     // linked list
-//     if (iter->current_entry) {
-//         iter->prev_entry = iter->current_entry;
-//
-//         iter->current_entry = iter->current_entry->next;
-//     }
-//
-//     // if there was nothing in the next spot find the next bucket
-//     if (iter->current_entry == NULL) {
-//         iter->prev_index = iter->current_index;
-//
-//         // get to the next table index so we dont hit the current entry
-//         again
-//         ++iter->current_index;
-//
-//         // find the next full bucket
-//         while (iter->current_index < iter->table_size &&
-//                iter->iter_table[iter->current_index] == NULL) {
-//
-//             ++iter->current_index;
-//         }
-//
-//         // set the new current_entry if we are in bounds
-//         //
-//         // the last current_entry was from a different bucket so we dont
-//         need to
-//         // bother with the previous entry, just the index form above
-//         if (iter->current_index < iter->table_size) {
-//             // set the new current_entry
-//             iter->current_entry = iter->iter_table[iter->current_index];
-//         }
-//     }
-//
-//     // if entry is value then set the given ptrs to the current key and
-//     value
-//     // else do nothing as entry will be empty and thus stop the iteration
-//     if (iter->current_entry) {
-//         *key = iter->current_entry->key;
-//
-//         *value = iter->current_entry->value;
-//     }
-// }
-//
-// /** next unsafe
-//  *
-//  * it is not safe to mutate the table while iterating with this function
-//  */
-// void iter_next_hashmap(IterHashMap *iter, uint64_t *key, void **value) {
-//     // if current entry is not null then try and get the next Entry from
-//     the
-//     // linked list
-//     if (iter->current_entry) {
-//         iter->prev_entry = iter->current_entry;
-//
-//         iter->current_entry = iter->current_entry->next;
-//     }
-//
-//     // if there was nothing in the next spot find the next bucket
-//     if (iter->current_entry == NULL) {
-//         // get to the next table index so we dont hit the current entry
-//         again
-//         ++iter->current_index;
-//
-//         // find the next full bucket
-//         while (iter->current_index < iter->table_size &&
-//                iter->iter_table[iter->current_index] == NULL) {
-//
-//             ++iter->current_index;
-//         }
-//
-//         // set the new current_entry if we are in bounds
-//         //
-//         // the last current_entry was from a different bucket so we dont
-//         need to
-//         // bother with the previous entry, just the index form above
-//         if (iter->current_index < iter->table_size) {
-//             // set the new current_entry
-//             iter->current_entry = iter->iter_table[iter->current_index];
-//         }
-//     }
-//
-//     // if entry is value then set the given ptrs to the current key and
-//     value
-//     // else do nothing as entry will be empty and thus stop the iteration
-//     if (iter->current_entry) {
-//         *key = iter->current_entry->key;
-//
-//         *value = iter->current_entry->value;
-//     }
-// }
+/** get an iterator for a hashmap
+ *
+ * this is definitely not thread safe
+ */
+IterHashMap *get_iter_hashmap_base(HashMapBase *map) {
+    IterHashMap *iter = (IterHashMap *)malloc(sizeof(IterHashMap));
+
+    if (iter == NULL) {
+        return NULL;
+    }
+
+    iter->current_index = -1;
+    iter->current_entry = NULL;
+
+    iter->prev_index = -1;
+    iter->prev_entry = NULL;
+
+    iter->table_size = map->table_size;
+
+    iter->iter_table = map->table;
+
+    return iter;
+}
+
+void drop_iter_hashmap(IterHashMap *iter) {
+    free(iter);
+}
+
+/** next unsafe
+ *
+ * it is not safe to mutate the table while iterating with this function
+ */
+void iter_next_hashmap(IterHashMap *iter, const void **key, void **value) {
+    // if current entry is not null then try and get the next Entry from the
+    // linked list
+    if (iter->current_entry) {
+        iter->prev_entry = iter->current_entry;
+
+        iter->current_entry = iter->current_entry->next;
+    }
+
+    // if there was nothing in the next spot find the next bucket
+    if (iter->current_entry == NULL) {
+        // get to the next table index so we dont hit the current entry again
+        ++iter->current_index;
+
+        // find the next full bucket
+        while (iter->current_index < iter->table_size &&
+               iter->iter_table[iter->current_index] == NULL) {
+
+            ++iter->current_index;
+        }
+
+        // set the new current_entry if we are in bounds
+        //
+        // the last current_entry was from a different bucket so we dont need to
+        // bother with the previous entry, just the index form above
+        if (iter->current_index < iter->table_size) {
+            // set the new current_entry
+            iter->current_entry = iter->iter_table[iter->current_index];
+        }
+    }
+
+    // if entry is value then set the given ptrs to the current key and value
+    // else do nothing as entry will be empty and thus stop the iteration
+    if (iter->current_entry) {
+        *key = iter->current_entry->key;
+
+        *value = iter->current_entry->value;
+    }
+}
+
+/** next safe
+ *
+ * this will keep track of a previous entry and make sure that we get to the
+ * right entry even if the user deletes an entry
+ */
+void iter_next_safe_hashmap(IterHashMap *iter, const void **key, void **value) {
+    // if there is a previous entry and it has the same index as the current
+    // entry then reset current to the last entry so we get to the right entry
+    // in the next if even if the user removed an entry during iteration
+    //
+    // this is bad and i feel bad
+    if (iter->prev_entry && iter->prev_index == iter->current_index) {
+        iter->current_entry = iter->prev_entry;
+    }
+    // if current entry is not null then try and get the next Entry from the
+    // linked list
+    if (iter->current_entry) {
+        iter->prev_entry = iter->current_entry;
+
+        iter->current_entry = iter->current_entry->next;
+    }
+
+    // if there was nothing in the next spot find the next bucket
+    if (iter->current_entry == NULL) {
+        iter->prev_index = iter->current_index;
+
+        // get to the next table index so we dont hit the current entry again
+        ++iter->current_index;
+
+        // find the next full bucket
+        while (iter->current_index < iter->table_size &&
+               iter->iter_table[iter->current_index] == NULL) {
+
+            ++iter->current_index;
+        }
+
+        // set the new current_entry if we are in bounds
+        //
+        // the last current_entry was from a different bucket so we dont need to
+        // bother with the previous entry, just the index form above
+        if (iter->current_index < iter->table_size) {
+            // set the new current_entry
+            iter->current_entry = iter->iter_table[iter->current_index];
+        }
+    }
+
+    // if entry is value then set the given ptrs to the current key and value
+    // else do nothing as entry will be empty and thus stop the iteration
+    if (iter->current_entry) {
+        *key = iter->current_entry->key;
+
+        *value = iter->current_entry->value;
+    }
+}
