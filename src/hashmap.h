@@ -78,6 +78,9 @@
         value_to_fill = remove_entry_hashmap_base(hashmap->map_base, _key);    \
     } while (0)
 
+#define get_iter_hashmap(hashmap, iter)                                        \
+    iter = get_iter_hashmap_base(hashmap->map_base);
+
 /** iterate over the hash map (unsafe)
  *
  * call iter_next_hashmap() in a loop until the iter index is the same or larger
@@ -88,18 +91,18 @@
 #define for_each(iter, key, value)                                             \
     iter->current_index = 0;                                                   \
                                                                                \
-    for (iter_next_hashmap(iter, &key, &value);                                \
+    for (iter_next_hashmap(iter, (const void **)&key, (void **)&value);        \
          iter->current_index < iter->table_size &&                             \
          iter->current_entry != NULL;                                          \
-         iter_next_hashmap(iter, &key, &value))
+         iter_next_hashmap(iter, (const void **)&key, (void **)&value))
 
 #define for_each_safe(iter, key, value)                                        \
     iter->current_index = 0;                                                   \
                                                                                \
-    for (iter_next_safe_hashmap(iter, &key, &value);                           \
+    for (iter_next_safe_hashmap(iter, (const void **)&key, (void **)&value);   \
          iter->current_index < iter->table_size &&                             \
          iter->current_entry != NULL;                                          \
-         iter_next_safe_hashmap(iter, &key, &value))
+         iter_next_safe_hashmap(iter, (const void **)&key, (void **)&value))
 
 uint64_t integer_hash64(uint64_t x);
 size_t data_hash64(const void *data, size_t len);

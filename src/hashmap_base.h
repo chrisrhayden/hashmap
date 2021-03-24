@@ -70,4 +70,9 @@ void *remove_entry_hashmap_base(HashMapBase *map, const void *key);
 
 bool contains_key_hashmap_base(HashMapBase *map, const void *key);
 
+IterHashMap *get_iter_hashmap_base(HashMapBase *map);
+
+void iter_next_hashmap(IterHashMap *iter, const void **key, void **value);
+void iter_next_safe_hashmap(IterHashMap *iter, const void **key, void **value);
+
 #endif
