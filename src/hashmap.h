@@ -76,6 +76,7 @@
                                       (void *)_value);                         \
     } while (0)
 
+/* check if the hashmap contains a given key */
 #define contains_key_hashmap(hashmap, key, contains)                           \
     do {                                                                       \
         typeof(hashmap->_data_types.key_t) _key = key;                         \
@@ -84,6 +85,10 @@
             contains_key_hashmap_base(hashmap->map_base, (const void *)_key);  \
     } while (0)
 
+/* remove an entry and return the value
+ *
+ * the returned value needs to be freed by the user
+ */
 #define remove_entry_hashmap(hashmap, key, value_to_fill)                      \
     do {                                                                       \
         typeof(hashmap->_data_types.key_t) _key = key;                         \
@@ -93,10 +98,9 @@
         *_value = remove_entry_hashmap_base(hashmap->map_base, _key);          \
     } while (0)
 
+/* a wrapper to expose the full interface from this header file only  */
 #define get_iter_hashmap(hashmap, iter)                                        \
     iter = get_iter_hashmap_base(hashmap->map_base);
-
-// #define drop_iter(iter) drop_iter(iter)
 
 /** iterate over the hash map (unsafe)
  *
@@ -113,6 +117,8 @@
          iter->current_entry != NULL;                                          \
          iter_next_hashmap(iter, (const void **)&key, (void **)&value))
 
+/* same as the other for_each but it is safe to remove entrys while iterating
+ */
 #define for_each_safe(iter, key, value)                                        \
     iter->current_index = 0;                                                   \
                                                                                \
@@ -120,8 +126,5 @@
          iter->current_index < iter->table_size &&                             \
          iter->current_entry != NULL;                                          \
          iter_next_safe_hashmap(iter, (const void **)&key, (void **)&value))
-
-uint64_t integer_hash64(uint64_t x);
-size_t data_hash64(const void *data, size_t len);
 
 #endif

@@ -9,6 +9,10 @@
 #define GROWTH_FACTOR 2
 #define MAX_LOAD_FACTOR 0.7
 
+/* expose the hash functions to be used by the user */
+uint64_t integer_hash64(uint64_t x);
+size_t data_hash64(const void *data, size_t len);
+
 /* the function signature to hash the key
  *
  * this will be stored with the struct
