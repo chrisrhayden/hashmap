@@ -337,8 +337,6 @@ void iter_next_hashmap(IterHashMap *iter, const void **key, void **value) {
     // if current entry is not null then try and get the next Entry from the
     // linked list
     if (iter->current_entry) {
-        iter->prev_entry = iter->current_entry;
-
         iter->current_entry = iter->current_entry->next;
     }
 
@@ -355,9 +353,6 @@ void iter_next_hashmap(IterHashMap *iter, const void **key, void **value) {
         }
 
         // set the new current_entry if we are in bounds
-        //
-        // the last current_entry was from a different bucket so we dont need to
-        // bother with the previous entry, just the index form above
         if (iter->current_index < iter->table_size) {
             // set the new current_entry
             iter->current_entry = iter->iter_table[iter->current_index];
@@ -387,6 +382,7 @@ void iter_next_safe_hashmap(IterHashMap *iter, const void **key, void **value) {
     if (iter->prev_entry && iter->prev_index == iter->current_index) {
         iter->current_entry = iter->prev_entry;
     }
+
     // if current entry is not null then try and get the next Entry from the
     // linked list
     if (iter->current_entry) {
@@ -412,9 +408,11 @@ void iter_next_safe_hashmap(IterHashMap *iter, const void **key, void **value) {
         // set the new current_entry if we are in bounds
         //
         // the last current_entry was from a different bucket so we dont need to
-        // bother with the previous entry, just the index form above
+        // bother with the previous entry, just the index for above
         if (iter->current_index < iter->table_size) {
             // set the new current_entry
+            iter->prev_index = iter->current_index;
+
             iter->current_entry = iter->iter_table[iter->current_index];
         }
     }

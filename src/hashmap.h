@@ -110,7 +110,11 @@
  * by setting the *current_index to zero every time this is called expanded
  */
 #define for_each(iter, key, value)                                             \
+    iter->prev_entry = NULL;                                                   \
+    iter->current_entry = NULL;                                                \
+                                                                               \
     iter->current_index = 0;                                                   \
+    iter->prev_index = 0;                                                      \
                                                                                \
     for (iter_next_hashmap(iter, (const void **)&key, (void **)&value);        \
          iter->current_index < iter->table_size &&                             \
@@ -120,7 +124,11 @@
 /* same as the other for_each but it is safe to remove entrys while iterating
  */
 #define for_each_safe(iter, key, value)                                        \
+    iter->prev_entry = NULL;                                                   \
+    iter->current_entry = NULL;                                                \
+                                                                               \
     iter->current_index = 0;                                                   \
+    iter->prev_index = 0;                                                      \
                                                                                \
     for (iter_next_safe_hashmap(iter, (const void **)&key, (void **)&value);   \
          iter->current_index < iter->table_size &&                             \

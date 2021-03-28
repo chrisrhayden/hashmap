@@ -4,20 +4,50 @@
 
 #include "../src/hashmap.h"
 
-HAHSMAP(HashMapInt, int, int);
+typedef struct {
+    uint64_t x;
+    uint64_t y;
+} MapPoint;
 
-uint64_t key_hash_func(const int *point) {
-    return integer_hash64(*point);
+HAHSMAP(HashMapPoint, MapPoint, uint64_t);
+
+uint64_t key_hash_func(const MapPoint *point) {
+    return data_hash64(point, sizeof(MapPoint));
 }
 
-bool key_comp_func(const int *data_1, const int *data_2) {
-    return (*data_1 == *data_2);
+bool key_comp_func(const MapPoint *data_1, const MapPoint *data_2) {
+    if (data_1->x == data_2->x && data_1->y == data_2->y) {
+        return true;
+    }
+
+    return false;
 }
 
-HashMapInt *init_map() {
-    HashMapInt *map;
+void drop_value_func(MapPoint *key, uint64_t *value) {
+    if (key) {
+        free(key);
+    }
 
-    init_hashmap(map, key_hash_func, NULL, key_comp_func);
+    if (value) {
+        free(value);
+    }
+
+    return;
+}
+
+MapPoint *create_map_point(int x, int y) {
+    MapPoint *key = malloc(sizeof(MapPoint));
+
+    key->x = x;
+    key->y = y;
+
+    return key;
+}
+
+HashMapPoint *init_map() {
+    HashMapPoint *map;
+
+    init_hashmap(map, key_hash_func, drop_value_func, key_comp_func);
 
     return map;
 }
@@ -28,7 +58,7 @@ int main() {
 
     time_t before = clock();
 
-    HashMapInt *map = init_map();
+    HashMapPoint *map = init_map();
 
     if (map == NULL) {
         printf("did not allocate memory\n");
@@ -37,11 +67,10 @@ int main() {
 
     bool success = false;
     for (int i = 0; i < iter_count; ++i) {
-        int *key = malloc(sizeof(*key));
-        int *value = malloc(sizeof(*value));
+        // MapPoint *key = create_map_point(i, i + i);
 
-        *key = i;
-        *value = i;
+        uint64_t *value = malloc(sizeof(uint64_t));
+        *value = (uint64_t)i;
 
         insert_hashmap(map, key, value, success);
 
@@ -57,30 +86,18 @@ int main() {
     }
 
     bool contains = false;
+
     IterHashMap *iter;
 
     get_iter_hashmap(map, iter);
 
-    int *iter_key;
-    int *value;
+    MapPoint *iter_key;
+    uint64_t *value;
 
     contains = false;
 
     for_each(iter, iter_key, value) {
-        printf("%d \n", *value);
         contains_key_hashmap(map, iter_key, contains);
-
-        if (contains == false) {
-            break;
-        }
-    }
-
-    time_t now = clock();
-    double delta = (double)(now - before) / CLOCKS_PER_SEC;
-
-    contains = false;
-    for (int i = 0; i < iter_count; ++i) {
-        contains_key_hashmap(map, &i, contains);
 
         if (contains == false) {
             break;
@@ -91,6 +108,10 @@ int main() {
         printf("found all\n");
     }
 
+    time_t now = clock();
+
+    double delta = (double)(now - before) / CLOCKS_PER_SEC;
+
     printf("> delta %f\n", delta);
 
     iter_key = NULL;
@@ -99,8 +120,6 @@ int main() {
 
     for_each_safe(iter, iter_key, value) {
         contains_key_hashmap(map, iter_key, contains);
-
-        printf("%d \n", **(int **)value);
 
         if (contains == false) {
             break;
@@ -114,21 +133,24 @@ int main() {
     if (contains != false) {
         contains = false;
 
-        int *value_to_fill = NULL;
+        uint64_t *value_to_fill = NULL;
 
-        int new_key = 99;
+        MapPoint *new_key = create_map_point(99, 198);
 
-        remove_entry_hashmap(map, &new_key, value_to_fill);
+        remove_entry_hashmap(map, new_key, value_to_fill);
 
         if (value_to_fill != NULL) {
             printf("found value %lu\n", *(uint64_t *)value_to_fill);
         }
 
-        contains_key_hashmap(map, &new_key, contains);
+        contains_key_hashmap(map, new_key, contains);
 
         if (contains == false) {
             printf("key was removed\n");
         }
+
+        free(new_key);
+        free(value_to_fill);
     }
 
     drop_iter_hashmap(iter);
