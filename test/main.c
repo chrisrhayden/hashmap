@@ -14,10 +14,20 @@ bool key_comp_func(const int *data_1, const int *data_2) {
     return (*data_1 == *data_2);
 }
 
+void kye_drop_func(int *key, int *value) {
+    if (key != NULL) {
+        free(key);
+    }
+
+    if (value != NULL) {
+        free(value);
+    }
+}
+
 HashMapInt *init_map() {
     HashMapInt *map;
 
-    init_hashmap(map, key_hash_func, NULL, key_comp_func);
+    init_hashmap(map, key_hash_func, kye_drop_func, key_comp_func);
 
     return map;
 }
@@ -67,7 +77,6 @@ int main() {
     contains = false;
 
     for_each(iter, iter_key, value) {
-        printf("%d \n", *value);
         contains_key_hashmap(map, iter_key, contains);
 
         if (contains == false) {
@@ -100,8 +109,6 @@ int main() {
     for_each_safe(iter, iter_key, value) {
         contains_key_hashmap(map, iter_key, contains);
 
-        printf("%d \n", **(int **)value);
-
         if (contains == false) {
             break;
         }
@@ -131,6 +138,7 @@ int main() {
         }
     }
 
+    printf("done\n");
     drop_iter_hashmap(iter);
     drop_hashmap(map);
 

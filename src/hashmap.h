@@ -93,9 +93,10 @@
     do {                                                                       \
         typeof(hashmap->_data_types.key_t) _key = key;                         \
                                                                                \
-        typeof(hashmap->_data_types.data_t) *_value = &value_to_fill;          \
+        typeof(hashmap->_data_types.data_t) _value = value_to_fill;            \
                                                                                \
-        *_value = remove_entry_hashmap_base(hashmap->map_base, _key);          \
+        _value = remove_entry_hashmap_base(hashmap->map_base, _key);           \
+                                                                               \
     } while (0)
 
 /* a wrapper to expose the full interface from this header file only  */

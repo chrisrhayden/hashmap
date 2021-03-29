@@ -41,7 +41,7 @@ void drop_table(HashMapBase *map) {
         entry = map->table[i];
 
         while (entry != NULL) {
-            if (map->drop_func && entry->value) {
+            if (map->drop_func) {
                 map->drop_func((void *)entry->key, entry->value);
             }
 
@@ -178,7 +178,20 @@ enum HashMapResult rehash_hashmap(HashMapBase *map) {
 
     } else { // assign the new table to the user's hashmap
         // drop the old table but dont drop the values
-        free(map->table);
+        // free(map->table);
+        for (int i = 0; i < map->table_size; ++i) {
+            Entry *entry = map->table[i];
+            Entry *temp = NULL;
+            while (entry != NULL) {
+                free(map->table[i]);
+
+                temp = entry->next;
+
+                free(entry);
+
+                entry = temp;
+            }
+        }
 
         // set the new table to the old hashmap
         map->table = temp_map->table;
@@ -269,7 +282,9 @@ void *remove_entry_hashmap_base(HashMapBase *map, const void *key) {
 
         value = entry->value;
 
-        map->drop_func((void *)entry->key, NULL);
+        if (map->drop_func) {
+            map->drop_func((void *)entry->key, NULL);
+        }
         free(entry);
 
         entry = NULL;
