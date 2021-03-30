@@ -87,13 +87,54 @@ Entry *create_entry(const void *key, void *value) {
  * this is where entrys will acutely be entered in to the table/linked
  list
  */
-enum HashMapResult _insert_hashmap(HashMapBase *map, Entry **entry) {
-    uint64_t key_hash = map->hash_func((*entry)->key) & (map->table_size - 1);
+// enum HashMapResult _insert_hashmap(HashMapBase *map, Entry **entry) {
+//    uint64_t key_hash = map->hash_func((*entry)->key) & (map->table_size - 1);
+
+//    // if the bucket entry is null then set the new entry as the start of the
+//    // linked list for the given bucket
+//    if (map->table[key_hash] == NULL) {
+//        map->table[key_hash] = *entry;
+
+//        return Success;
+//    }
+
+//    // if there is data in a given bucket see if there is a matching key
+//    // if not then add the new entry to the end of the buckets list
+//    bool found = false;
+
+//    Entry *table_entry = map->table[key_hash];
+
+//    // check all entrys in the list
+//    //
+//    // if we are at the first entry and next is null the we skip the loop and
+//    go
+//    // to the last key check
+//    // else we check the key in the loop
+//    while (table_entry->next != NULL && !found) {
+//        if (map->comp_func(table_entry->key, (*entry)->key)) {
+//            found = true;
+//        } else {
+//            table_entry = table_entry->next;
+//        }
+//    }
+
+//    // check the last (or first) entry in the list
+//    if (found || map->comp_func(table_entry->key, (*entry)->key)) {
+//        return FailedToInsertDuplicate;
+//    }
+
+//    // just add the entry to the end of the list
+//    table_entry->next = *entry;
+
+//    return Success;
+//}
+enum HashMapResult _insert_hashmap(HashMapBase *map, Entry *entry) {
+    uint64_t key_hash = map->hash_func(entry->key) & (map->table_size - 1);
 
     // if the bucket entry is null then set the new entry as the start of the
     // linked list for the given bucket
     if (map->table[key_hash] == NULL) {
-        map->table[key_hash] = *entry;
+        map->table[key_hash] = entry;
 
         return Success;
     }
@@ -110,7 +151,7 @@ enum HashMapResult _insert_hashmap(HashMapBase *map, Entry **entry) {
     // to the last key check
     // else we check the key in the loop
     while (table_entry->next != NULL && !found) {
-        if (map->comp_func(table_entry->key, (*entry)->key)) {
+        if (map->comp_func(table_entry->key, entry->key)) {
             found = true;
         } else {
             table_entry = table_entry->next;
@@ -118,12 +159,12 @@ enum HashMapResult _insert_hashmap(HashMapBase *map, Entry **entry) {
     }
 
     // check the last (or first) entry in the list
-    if (found || map->comp_func(table_entry->key, (*entry)->key)) {
+    if (found || map->comp_func(table_entry->key, entry->key)) {
         return FailedToInsertDuplicate;
     }
 
     // just add the entry to the end of the list
-    table_entry->next = *entry;
+    table_entry->next = entry;
 
     return Success;
 }
@@ -162,7 +203,7 @@ enum HashMapResult rehash_hashmap(HashMapBase *map) {
 
             entry->next = NULL;
 
-            result = _insert_hashmap(temp_map, &entry);
+            result = _insert_hashmap(temp_map, entry);
 
             entry = temp_entry;
         }
@@ -218,7 +259,7 @@ enum HashMapResult insert_hashmap_base(HashMapBase *map, const void *key,
 
     Entry *entry = create_entry(key, value);
 
-    result = _insert_hashmap(map, &entry);
+    result = _insert_hashmap(map, entry);
 
     if (result != Success) {
         return result;
