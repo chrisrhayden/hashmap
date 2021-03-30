@@ -10,10 +10,10 @@ HashMapBase *init_hashmap_base(HashFunc hash_func, DropFunc drop_func,
     HashMapBase *map = malloc(sizeof(*map));
 
     map->table_size = size;
-    map->table = (Entry **)calloc(sizeof(Entry *), size);
+    map->table = calloc(sizeof(Entry *), size);
 
     if (map->table == NULL) {
-        return false;
+        return NULL;
     }
 
     map->current_size = 0;
@@ -87,20 +87,13 @@ Entry *create_entry(const void *key, void *value) {
  * this is where entrys will acutely be entered in to the table/linked
  list
  */
-enum HashMapResult _insert_hashmap(HashMapBase *map, const void *key,
-                                   void *value) {
-    uint64_t key_hash = map->hash_func(key) & (map->table_size - 1);
+enum HashMapResult _insert_hashmap(HashMapBase *map, Entry **entry) {
+    uint64_t key_hash = map->hash_func((*entry)->key) & (map->table_size - 1);
 
     // if the bucket entry is null then set the new entry as the start of the
     // linked list for the given bucket
     if (map->table[key_hash] == NULL) {
-        Entry *entry = create_entry(key, value);
-
-        if (entry == NULL) {
-            return FailedToInsertNoMemory;
-        }
-
-        map->table[key_hash] = entry;
+        map->table[key_hash] = *entry;
 
         return Success;
     }
@@ -117,7 +110,7 @@ enum HashMapResult _insert_hashmap(HashMapBase *map, const void *key,
     // to the last key check
     // else we check the key in the loop
     while (table_entry->next != NULL && !found) {
-        if (map->comp_func(table_entry->key, key)) {
+        if (map->comp_func(table_entry->key, (*entry)->key)) {
             found = true;
         } else {
             table_entry = table_entry->next;
@@ -125,16 +118,12 @@ enum HashMapResult _insert_hashmap(HashMapBase *map, const void *key,
     }
 
     // check the last (or first) entry in the list
-    if (found || map->comp_func(table_entry->key, key)) {
+    if (found || map->comp_func(table_entry->key, (*entry)->key)) {
         return FailedToInsertDuplicate;
     }
 
     // just add the entry to the end of the list
-    table_entry->next = create_entry(key, value);
-
-    if (table_entry->next == NULL) {
-        return FailedToInsertNoMemory;
-    }
+    table_entry->next = *entry;
 
     return Success;
 }
@@ -159,16 +148,23 @@ enum HashMapResult rehash_hashmap(HashMapBase *map) {
         return FailedToInsertNoMemory;
     }
 
-    // go though the enter table rehashing all the entrys
+    Entry *entry = NULL;
+    Entry *temp_entry = NULL;
+
+    // go though the entry table rehashing all the entrys
     for (int i = 0; i < map->table_size && result == Success; ++i) {
         // iterate over the buckets linked list
-        Entry *entry = map->table[i];
+        entry = map->table[i];
 
-        while (entry && result == Success) {
+        while (entry != NULL && result == Success) {
 
-            result = _insert_hashmap(temp_map, entry->key, entry->value);
+            temp_entry = entry->next;
 
-            entry = entry->next;
+            entry->next = NULL;
+
+            result = _insert_hashmap(temp_map, &entry);
+
+            entry = temp_entry;
         }
     }
 
@@ -178,8 +174,8 @@ enum HashMapResult rehash_hashmap(HashMapBase *map) {
 
     } else { // assign the new table to the user's hashmap
         // drop the old table but dont drop the values
-
-        drop_table(map, NULL);
+        // drop_table(map, NULL);
+        free(map->table);
 
         // set the new table to the old hashmap
         map->table = temp_map->table;
@@ -220,7 +216,9 @@ enum HashMapResult insert_hashmap_base(HashMapBase *map, const void *key,
         return result;
     }
 
-    result = _insert_hashmap(map, key, value);
+    Entry *entry = create_entry(key, value);
+
+    result = _insert_hashmap(map, &entry);
 
     if (result != Success) {
         return result;
@@ -469,4 +467,25 @@ uint64_t integer_hash64(uint64_t x) {
     x = (x ^ (x >> 27)) * UINT64_C(0x94d049bb133111eb);
     x = x ^ (x >> 31);
     return x;
+}
+
+void print_hashmap_error(enum HashMapResult h_result) {
+    switch (h_result) {
+        case FailedToInsert: {
+            printf("failed to insert\n");
+            break;
+        }
+        case FailedToInsertDuplicate: {
+            printf("failed to insert -- duplicate\n");
+            break;
+        }
+        case FailedToInsertNoMemory: {
+            printf("failed to insert -- no memory\n");
+            break;
+        }
+        case Success: {
+            printf("success\n");
+            break;
+        }
+    }
 }

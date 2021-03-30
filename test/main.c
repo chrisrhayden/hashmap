@@ -14,7 +14,7 @@ bool key_comp_func(const int *data_1, const int *data_2) {
     return (*data_1 == *data_2);
 }
 
-void kye_drop_func(int *key, int *value) {
+void key_drop_func(int *key, int *value) {
     if (key != NULL) {
         free(key);
     }
@@ -27,7 +27,7 @@ void kye_drop_func(int *key, int *value) {
 HashMapInt *init_map() {
     HashMapInt *map;
 
-    init_hashmap(map, key_hash_func, kye_drop_func, key_comp_func);
+    init_hashmap(map, key_hash_func, key_drop_func, key_comp_func);
 
     return map;
 }
@@ -45,24 +45,29 @@ int main() {
         return 1;
     }
 
-    bool success = false;
-    for (int i = 0; i < iter_count; ++i) {
+    enum HashMapResult result = Success;
+
+    for (int i = 0; i < iter_count && result == Success; ++i) {
         int *key = malloc(sizeof(*key));
         int *value = malloc(sizeof(*value));
 
         *key = i;
         *value = i;
 
-        insert_hashmap(map, key, value, success);
+        insert_hashmap(map, key, value, result);
 
-        if (success == false) {
+        if (result != Success) {
+            printf("bad insert %d\n", i);
             break;
         }
     }
 
-    if (success == false) {
-        printf("could not insert in to hashmap n");
+    if (result != Success) {
+        printf("could not insert in to hashmap\n");
+        print_hashmap_error(result);
+
         drop_hashmap(map);
+
         return 1;
     }
 
@@ -96,8 +101,8 @@ int main() {
         }
     }
 
-    if (contains == true) {
-        printf("found all\n");
+    if (contains != true) {
+        printf("did not find all\n");
     }
 
     printf("> delta %f\n", delta);
@@ -114,8 +119,8 @@ int main() {
         }
     }
 
-    if (contains == true) {
-        printf("found all safe\n");
+    if (contains == false) {
+        printf("could not find all safe\n");
     }
 
     if (contains != false) {
@@ -127,22 +132,20 @@ int main() {
 
         remove_entry_hashmap(map, &new_key, value_to_fill);
 
-        if (value_to_fill != NULL) {
-            printf("found value %d\n", *(int *)value_to_fill);
+        if (value_to_fill == NULL) {
+            printf("could not find value\n");
         }
 
         free(value_to_fill);
 
         contains_key_hashmap(map, &new_key, contains);
 
-        if (contains == false) {
-            printf("key was removed\n");
+        if (contains != false) {
+            printf("key was not removed\n");
         }
     }
 
     drop_iter_hashmap(iter);
     drop_hashmap(map);
-    printf("done\n");
-
     return 0;
 }

@@ -3,6 +3,8 @@
 
 #include "hashmap_base.h"
 
+void print_hashmap_error(enum HashMapResult h_result);
+
 /* a macro to define a (kinda) type safe hashmap
  *
  * the map_base  struct is the actual hashmap
@@ -44,7 +46,7 @@
                                                                                \
         typeof(hashmap->_data_types.compare_func_t) _comp_func = comp_func;    \
                                                                                \
-        hashmap = malloc(sizeof(hashmap));                                     \
+        hashmap = malloc(sizeof(*hashmap));                                    \
                                                                                \
         if (hashmap != NULL) {                                                 \
             hashmap->map_base =                                                \
