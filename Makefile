@@ -21,6 +21,9 @@ test: build
 test_ox: build
 	$(CC) $(CFLAGS) -o2 $(TEST_SRC) $(OBJ_NAME) $(STD_LIBS) -o ./out/test
 
+test_E:
+	$(CC) $(CFLAGS) -E $(TEST_SRC) $(SRC)
+
 run_test: test
 	./out/test
 

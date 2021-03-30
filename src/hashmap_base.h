@@ -24,7 +24,7 @@ typedef uint64_t (*HashFunc)(const void *key);
  * if the function is null then the value is not dropped
  */
 // typedef void (*DropValueFunc)(void *value);
-typedef void (*DropValueFunc)(void *key, void *value);
+typedef void (*DropFunc)(void *key, void *value);
 
 typedef bool (*CompFunc)(const void *key_1, const void *key_2);
 
@@ -49,7 +49,7 @@ typedef struct {
     int current_size;
     Entry **table;
     HashFunc hash_func;
-    DropValueFunc drop_func;
+    DropFunc drop_func;
     CompFunc comp_func;
 } HashMapBase;
 
@@ -63,7 +63,7 @@ typedef struct {
     Entry **iter_table;
 } IterHashMap;
 
-HashMapBase *init_hashmap_base(HashFunc hash_func, DropValueFunc drop_func,
+HashMapBase *init_hashmap_base(HashFunc hash_func, DropFunc drop_func,
                                CompFunc comp_func, uint64_t size);
 
 void drop_hashmap_base(HashMapBase *map);

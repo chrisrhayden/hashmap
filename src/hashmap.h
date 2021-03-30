@@ -44,12 +44,12 @@
                                                                                \
         typeof(hashmap->_data_types.compare_func_t) _comp_func = comp_func;    \
                                                                                \
-        hashmap = (typeof(hashmap))malloc(sizeof(*hashmap));                   \
+        hashmap = malloc(sizeof(hashmap));                                     \
                                                                                \
         if (hashmap != NULL) {                                                 \
-            hashmap->map_base = init_hashmap_base(                             \
-                (HashFunc)_hash_func, (DropValueFunc)_drop_func,               \
-                (CompFunc)_comp_func, STARTING_SIZE);                          \
+            hashmap->map_base =                                                \
+                init_hashmap_base((HashFunc)_hash_func, (DropFunc)_drop_func,  \
+                                  (CompFunc)_comp_func, STARTING_SIZE);        \
         }                                                                      \
     } while (0)
 
@@ -88,14 +88,15 @@
 /* remove an entry and return the value
  *
  * the returned value needs to be freed by the user
+ * _value is used to check type
  */
 #define remove_entry_hashmap(hashmap, key, value_to_fill)                      \
     do {                                                                       \
         typeof(hashmap->_data_types.key_t) _key = key;                         \
                                                                                \
-        typeof(hashmap->_data_types.data_t) _value = value_to_fill;            \
+        typeof(hashmap->_data_types.data_t) *_value = &value_to_fill;          \
                                                                                \
-        _value = remove_entry_hashmap_base(hashmap->map_base, _key);           \
+        *_value = remove_entry_hashmap_base(hashmap->map_base, _key);          \
                                                                                \
     } while (0)
 

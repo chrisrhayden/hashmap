@@ -128,8 +128,10 @@ int main() {
         remove_entry_hashmap(map, &new_key, value_to_fill);
 
         if (value_to_fill != NULL) {
-            printf("found value %lu\n", *(uint64_t *)value_to_fill);
+            printf("found value %d\n", *(int *)value_to_fill);
         }
+
+        free(value_to_fill);
 
         contains_key_hashmap(map, &new_key, contains);
 
@@ -138,9 +140,9 @@ int main() {
         }
     }
 
-    printf("done\n");
     drop_iter_hashmap(iter);
     drop_hashmap(map);
+    printf("done\n");
 
     return 0;
 }

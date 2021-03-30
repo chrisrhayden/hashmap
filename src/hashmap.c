@@ -5,7 +5,7 @@
 
 /* init/create the hashmap base
  */
-HashMapBase *init_hashmap_base(HashFunc hash_func, DropValueFunc drop_func,
+HashMapBase *init_hashmap_base(HashFunc hash_func, DropFunc drop_func,
                                CompFunc comp_func, uint64_t size) {
     HashMapBase *map = malloc(sizeof(*map));
 
@@ -33,7 +33,7 @@ HashMapBase *init_hashmap_base(HashFunc hash_func, DropValueFunc drop_func,
  * probably is safer to do that here and let the drop_func assume it
  * will always have valid data
  */
-void drop_table(HashMapBase *map) {
+void drop_table(HashMapBase *map, DropFunc drop_func) {
     Entry *entry;
     Entry *temp;
 
@@ -41,7 +41,7 @@ void drop_table(HashMapBase *map) {
         entry = map->table[i];
 
         while (entry != NULL) {
-            if (map->drop_func) {
+            if (drop_func) {
                 map->drop_func((void *)entry->key, entry->value);
             }
 
@@ -59,7 +59,7 @@ void drop_table(HashMapBase *map) {
 /** drop the whole hashmap */
 void drop_hashmap_base(HashMapBase *map) {
     if (map->table) {
-        drop_table(map);
+        drop_table(map, map->drop_func);
     }
 
     free(map);
@@ -67,7 +67,7 @@ void drop_hashmap_base(HashMapBase *map) {
 
 /** create an entry struct */
 Entry *create_entry(const void *key, void *value) {
-    Entry *entry = (Entry *)malloc(sizeof(Entry));
+    Entry *entry = malloc(sizeof(Entry));
 
     if (entry == NULL) {
         return NULL;
@@ -178,20 +178,8 @@ enum HashMapResult rehash_hashmap(HashMapBase *map) {
 
     } else { // assign the new table to the user's hashmap
         // drop the old table but dont drop the values
-        // free(map->table);
-        for (int i = 0; i < map->table_size; ++i) {
-            Entry *entry = map->table[i];
-            Entry *temp = NULL;
-            while (entry != NULL) {
-                free(map->table[i]);
 
-                temp = entry->next;
-
-                free(entry);
-
-                entry = temp;
-            }
-        }
+        drop_table(map, NULL);
 
         // set the new table to the old hashmap
         map->table = temp_map->table;
@@ -321,7 +309,7 @@ void *remove_entry_hashmap_base(HashMapBase *map, const void *key) {
  * this is definitely not thread safe
  */
 IterHashMap *get_iter_hashmap_base(HashMapBase *map) {
-    IterHashMap *iter = (IterHashMap *)malloc(sizeof(IterHashMap));
+    IterHashMap *iter = malloc(sizeof(IterHashMap));
 
     if (iter == NULL) {
         return NULL;
@@ -330,7 +318,7 @@ IterHashMap *get_iter_hashmap_base(HashMapBase *map) {
     iter->current_index = -1;
     iter->current_entry = NULL;
 
-    iter->prev_index = -1;
+    iter->prev_index = -2;
     iter->prev_entry = NULL;
 
     iter->table_size = map->table_size;
