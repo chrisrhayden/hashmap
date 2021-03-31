@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -g -pedantic
 
-OPTIMIZATION = -o3
+OPTIMIZATION = -o2
 
 SRC = $(wildcard ./src/*.c)
 
