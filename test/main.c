@@ -27,7 +27,7 @@ void key_drop_func(int *key, int *value) {
 HashMapInt *init_map() {
     HashMapInt *map;
 
-    init_hashmap(map, key_hash_func, key_drop_func, key_comp_func);
+    init_hashmap(map, key_hash_func, key_comp_func, key_drop_func);
 
     return map;
 }

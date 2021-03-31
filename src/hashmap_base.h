@@ -33,6 +33,7 @@ enum HashMapResult {
     FailedToInsert,
     FailedToInsertNoMemory,
     FailedToInsertDuplicate,
+    FailedToRehashNoMemory,
     Success,
 };
 
@@ -63,8 +64,8 @@ typedef struct {
     Entry **iter_table;
 } IterHashMap;
 
-HashMapBase *init_hashmap_base(HashFunc hash_func, DropFunc drop_func,
-                               CompFunc comp_func, uint64_t size);
+HashMapBase *init_hashmap_base(HashFunc hash_func, CompFunc comp_func,
+                               DropFunc drop_func, uint64_t size);
 
 void drop_hashmap_base(HashMapBase *map);
 

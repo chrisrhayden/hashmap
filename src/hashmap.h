@@ -38,20 +38,20 @@ void print_hashmap_error(enum HashMapResult h_result);
  *   HashMap *map;
  *   init_hashmap(map, hash_func, drop_func);
  */
-#define init_hashmap(hashmap, hash_func, drop_func, comp_func)                 \
+#define init_hashmap(hashmap, hash_func, comp_func, drop_func)                 \
     do {                                                                       \
         typeof(hashmap->_data_types.hash_func_t) _hash_func = hash_func;       \
                                                                                \
-        typeof(hashmap->_data_types.drop_func_t) _drop_func = drop_func;       \
-                                                                               \
         typeof(hashmap->_data_types.compare_func_t) _comp_func = comp_func;    \
+                                                                               \
+        typeof(hashmap->_data_types.drop_func_t) _drop_func = drop_func;       \
                                                                                \
         hashmap = malloc(sizeof(*hashmap));                                    \
                                                                                \
         if (hashmap != NULL) {                                                 \
             hashmap->map_base =                                                \
-                init_hashmap_base((HashFunc)_hash_func, (DropFunc)_drop_func,  \
-                                  (CompFunc)_comp_func, STARTING_SIZE);        \
+                init_hashmap_base((HashFunc)_hash_func, (CompFunc)_comp_func,  \
+                                  (DropFunc)_drop_func, STARTING_SIZE);        \
         }                                                                      \
     } while (0)
 
