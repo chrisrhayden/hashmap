@@ -32,8 +32,13 @@ HashMapInt *init_map() {
     return map;
 }
 
+#include <gperftools/profiler.h>
 int main() {
-    int iter_count = 10000;
+    ProfilerStart("./out/gperf_tools.log");
+
+    int iter_count = 900000;
+    // int iter_count = 100000;
+    // int iter_count = 10000;
     // int iter_count = 100;
 
     time_t before = clock();
@@ -50,7 +55,6 @@ int main() {
     for (int i = 0; i < iter_count && result == Success; ++i) {
         int *key = malloc(sizeof(*key));
         int *value = malloc(sizeof(*value));
-
         *key = i;
         *value = i;
 
@@ -107,45 +111,47 @@ int main() {
 
     printf("> delta %f\n", delta);
 
-    iter_key = NULL;
-    value = NULL;
-    contains = false;
+    // iter_key = NULL;
+    // value = NULL;
+    // contains = false;
 
-    for_each_safe(iter, iter_key, value) {
-        contains_key_hashmap(map, iter_key, contains);
+    // for_each_safe(iter, iter_key, value) {
+    //     contains_key_hashmap(map, iter_key, contains);
 
-        if (contains == false) {
-            break;
-        }
-    }
+    //     if (contains == false) {
+    //         break;
+    //     }
+    // }
 
-    if (contains == false) {
-        printf("could not find all safe\n");
-    }
+    // if (contains == false) {
+    //     printf("could not find all safe\n");
+    // }
 
-    if (contains != false) {
-        contains = false;
+    // if (contains != false) {
+    //     contains = false;
 
-        int *value_to_fill = NULL;
+    //     int *value_to_fill = NULL;
 
-        int new_key = 99;
+    //     int new_key = 99;
 
-        remove_entry_hashmap(map, &new_key, value_to_fill);
+    //     remove_entry_hashmap(map, &new_key, value_to_fill);
 
-        if (value_to_fill == NULL) {
-            printf("could not find value\n");
-        }
+    //     if (value_to_fill == NULL) {
+    //         printf("could not find value\n");
+    //     }
 
-        free(value_to_fill);
+    //     free(value_to_fill);
 
-        contains_key_hashmap(map, &new_key, contains);
+    //     contains_key_hashmap(map, &new_key, contains);
 
-        if (contains != false) {
-            printf("key was not removed\n");
-        }
-    }
+    //     if (contains != false) {
+    //         printf("key was not removed\n");
+    //     }
+    // }
 
     drop_iter_hashmap(iter);
     drop_hashmap(map);
+
+    ProfilerStop();
     return 0;
 }

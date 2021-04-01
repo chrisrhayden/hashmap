@@ -172,6 +172,25 @@ enum HashMapResult _insert_hashmap(HashMapBase *map, Entry *entry) {
     return Success;
 }
 
+enum HashMapResult _insert_hashmap_rehash(HashMapBase *map, Entry *entry) {
+    uint64_t key_hash = map->hash_func(entry->key) & (map->table_size - 1);
+
+    // if the bucket entry is null then set the new entry as the start of the
+    // linked list for the given bucket
+    if (map->table[key_hash] == NULL) {
+        map->table[key_hash] = entry;
+
+        return Success;
+    }
+
+    map->table[key_hash] = entry;
+
+    // just add the entry to the end of the list if there isn't a duplicate
+
+    // let the user know it was successful
+    return Success;
+}
+
 /** rehash the whole table
  *
  * this will rehash the whole table to a bigger size based on the GROWTH_FACTOR
@@ -213,7 +232,7 @@ enum HashMapResult rehash_hashmap(HashMapBase *map) {
             // incomplete if there is an issue inserting or rehashing
             entry->next = NULL;
 
-            result = _insert_hashmap(temp_map, entry);
+            result = _insert_hashmap_rehash(temp_map, entry);
 
             entry = temp_entry;
         }
