@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -g -pedantic
+CFLAGS = -Wall -pedantic
 
 OPTIMIZATION = -o2
 
@@ -13,7 +13,6 @@ STD_LIBS = -lm
 
 build: $(SRC)
 	$(CC) $(CFLAGS) $(OPTIMIZATION) -c $^ $(STD_LIBS) -o $(OBJ_NAME)
-
 
 test: build
 	$(CC) $(CFLAGS) $(OPTIMIZATION) $(TEST_SRC) $(OBJ_NAME) $(STD_LIBS) -o ./out/test
