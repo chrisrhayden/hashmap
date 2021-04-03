@@ -34,11 +34,11 @@ HashMapInt *init_map() {
 
 #include <gperftools/profiler.h>
 int main() {
-    ProfilerStart("./out/gperf_tools.log");
+    // ProfilerStart("./out/gperf_tools.log");
 
-    int iter_count = 900000;
+    // int iter_count = 900000;
     // int iter_count = 100000;
-    // int iter_count = 10000;
+    int iter_count = 10000;
     // int iter_count = 100;
 
     time_t before = clock();
@@ -77,18 +77,16 @@ int main() {
 
     bool contains = false;
     IterHashMap *iter;
-
     get_iter_hashmap(map, iter);
-
     int *iter_key;
     int *value;
 
-    contains = false;
-
+    // this is silly but its just to have something to do with the hashmap
     for_each(iter, iter_key, value) {
         contains_key_hashmap(map, iter_key, contains);
 
         if (contains == false) {
+            printf("could not find key\n");
             break;
         }
     }
@@ -96,20 +94,22 @@ int main() {
     time_t now = clock();
     double delta = (double)(now - before) / CLOCKS_PER_SEC;
 
+    int key = 10;
     contains = false;
     for (int i = 0; i < iter_count; ++i) {
-        contains_key_hashmap(map, &i, contains);
+        contains_key_hashmap(map, &key, contains);
 
         if (contains == false) {
+            printf("did not find %d\n", key);
             break;
         }
     }
 
+    printf("> delta %f\n", delta);
+
     if (contains != true) {
         printf("did not find all\n");
     }
-
-    printf("> delta %f\n", delta);
 
     // iter_key = NULL;
     // value = NULL;
@@ -149,9 +149,9 @@ int main() {
     //     }
     // }
 
-    drop_iter_hashmap(iter);
+    // drop_iter_hashmap(iter);
     drop_hashmap(map);
 
-    ProfilerStop();
+    // ProfilerStop();
     return 0;
 }
