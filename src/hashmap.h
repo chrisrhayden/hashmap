@@ -19,7 +19,7 @@
  * the _data_types struct is to allow for checking the types in the macro
  * interface and will not receive values
  */
-#define HAHSMAP(name, key_type, data_type)                                     \
+#define HASHMAP(name, key_type, data_type)                                     \
     typedef struct {                                                           \
         HashMapBase *map_base;                                                 \
         struct {                                                               \
@@ -37,7 +37,7 @@
  *
  * @param hashmap
  *  a new hashmap to instantiate
- *  this should be the one you get from the HAHSMAP macro
+ *  this should be the one you get from the HASHMAP macro
  *
  * @param hash_func
  *  the hash function that will be use by the base map

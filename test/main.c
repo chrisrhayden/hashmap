@@ -4,7 +4,7 @@
 
 #include "../src/hashmap.h"
 
-HAHSMAP(HashMapInt, int, int);
+HASHMAP(HashMapInt, int, int);
 
 uint64_t key_hash_func(const int *point) {
     return integer_hash64(*point);
