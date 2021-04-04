@@ -204,6 +204,7 @@ void print_hashmap_error(enum HashMapResult h_result);
 
 /* expose the hash functions to be used by the user */
 uint64_t integer_hash64(uint64_t x);
+uint64_t integer_hash32(uint64_t x);
 size_t data_hash64(const void *data, size_t len);
 
 #endif
