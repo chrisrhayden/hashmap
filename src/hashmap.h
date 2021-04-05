@@ -195,6 +195,8 @@
          iter->current_entry != NULL;                                          \
          iter_next_safe_hashmap(iter, (const void **)&key, (void **)&value))
 
+#define get_longest_chain(hashmap) get_longest_chain_base(hashmap->map_base);
+
 /** print a what a hashmap HashMapResult is
  *
  * @param h_result

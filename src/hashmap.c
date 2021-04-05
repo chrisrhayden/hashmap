@@ -531,6 +531,29 @@ void iter_next_safe_hashmap(IterHashMap *iter, const void **key, void **value) {
     }
 }
 
+int get_longest_chain_base(HashMapBase *map) {
+    int counter = 0;
+    int longest = 0;
+
+    Entry *entry = NULL;
+
+    for (int i = 0; i < map->table_size; ++i) {
+        counter = 0;
+        entry = map->table[i];
+
+        while (entry != NULL) {
+            ++counter;
+            entry = entry->next;
+        }
+
+        if (counter > longest) {
+            longest = counter;
+        }
+    }
+
+    return longest;
+}
+
 /* this was taken from
  * https://github.com/DavidLeeds/hashmap/
  * blob/137d60b3818c22c79d2be5560150eb2eff981a68/src/hashmap.c#L601

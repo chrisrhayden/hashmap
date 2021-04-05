@@ -77,4 +77,5 @@ void drop_iter_hashmap(IterHashMap *iter);
 void iter_next_hashmap(IterHashMap *iter, const void **key, void **value);
 void iter_next_safe_hashmap(IterHashMap *iter, const void **key, void **value);
 
+int get_longest_chain_base(HashMapBase *map);
 #endif
