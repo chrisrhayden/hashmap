@@ -265,6 +265,12 @@ int main() {
         }
     }
 
+    void *return_value = NULL;
+
+    char get_key = '+';
+
+    get_value_hashmap(map, get_key, value);
+
     int longest = get_longest_chain(map);
 
     printf("longest chain %d\n", longest);
