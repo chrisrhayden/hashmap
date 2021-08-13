@@ -118,6 +118,13 @@
             contains_key_hashmap_base(hashmap->map_base, (const void *)_key);  \
     } while (0)
 
+#define get_value_hashmap(hashmap, key, value)                                 \
+    do {                                                                       \
+        typeof(hashmap->_data_types.key_t) _key = key;                         \
+                                                                               \
+        value = get_value_hashmap_base(hashmap->map_base, _key);               \
+    } while (0)
+
 /* remove an entry and return the value
  *
  * the returned value needs to be freed by the user

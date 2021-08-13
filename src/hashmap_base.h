@@ -71,6 +71,8 @@ void *remove_entry_hashmap_base(HashMapBase *map, const void *key);
 
 bool contains_key_hashmap_base(HashMapBase *map, const void *key);
 
+void *get_value_hashmap_base(HashMapBase *map, const void *key);
+
 IterHashMap *get_iter_hashmap_base(HashMapBase *map);
 void drop_iter_hashmap(IterHashMap *iter);
 

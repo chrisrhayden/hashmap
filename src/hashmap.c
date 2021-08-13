@@ -319,6 +319,23 @@ bool contains_key_hashmap_base(HashMapBase *map, const void *key) {
     return found;
 }
 
+void *get_value_hashmap_base(HashMapBase *map, const void *key) {
+    uint64_t key_hash = map->hash_func(key) & (map->table_size - 1);
+
+    void *value = NULL;
+    Entry *entry = map->table[key_hash];
+
+    while (entry != NULL && value == NULL) {
+        if (map->comp_func(entry->key, key)) {
+            value = entry->value;
+        } else {
+            entry = entry->next;
+        }
+    }
+
+    return value;
+}
+
 /** delete the entry for the given key
  *
  * @param map
