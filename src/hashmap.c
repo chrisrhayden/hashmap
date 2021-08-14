@@ -620,13 +620,13 @@ uint64_t integer_hash64(uint64_t x) {
 /* taken from
  * https://github.com/skeeto/hash-prospector
  */
-uint64_t integer_hash32(uint32_t x) {
+uint32_t integer_hash32(uint32_t x) {
     x ^= x >> 16;
     x *= 0x7feb352d;
     x ^= x >> 15;
     x *= 0x846ca68b;
     x ^= x >> 16;
-    return (uint64_t)x;
+    return (uint32_t)x;
 }
 
 /** print a hasmap error to the console
