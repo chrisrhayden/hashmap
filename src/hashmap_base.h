@@ -35,7 +35,7 @@ enum HashMapResult {
 /* a entry in the hashmap */
 typedef struct Entry {
     void *value;
-    const void *key;
+    void *key;
     struct Entry *next;
 } Entry;
 
@@ -52,11 +52,8 @@ typedef struct {
 /* the iteration data */
 typedef struct {
     int current_index;
-    int prev_index;
-    int table_size;
-    Entry *prev_entry;
     Entry *current_entry;
-    Entry **iter_table;
+    HashMapBase *base;
 } IterHashMap;
 
 HashMapBase *init_hashmap_base(HashFunc hash_func, CompFunc comp_func,
@@ -64,20 +61,25 @@ HashMapBase *init_hashmap_base(HashFunc hash_func, CompFunc comp_func,
 
 void drop_hashmap_base(HashMapBase *map);
 
-enum HashMapResult insert_hashmap_base(HashMapBase *map, const void *,
-                                       void *value);
+void drop_entry(Entry *prev_entry, Entry *current_entry);
 
-void *remove_entry_hashmap_base(HashMapBase *map, const void *key);
+enum HashMapResult insert_hashmap_base(HashMapBase *map, void *, void *value);
 
-bool contains_key_hashmap_base(HashMapBase *map, const void *key);
+void *remove_entry_hashmap_base(HashMapBase *map, void *key);
 
-void *get_value_hashmap_base(HashMapBase *map, const void *key);
+bool contains_key_hashmap_base(HashMapBase *map, void *key);
+
+void *get_value_hashmap_base(HashMapBase *map, void *key);
 
 IterHashMap *get_iter_hashmap_base(HashMapBase *map);
 void drop_iter_hashmap(IterHashMap *iter);
 
-void iter_next_hashmap(IterHashMap *iter, const void **key, void **value);
-void iter_next_safe_hashmap(IterHashMap *iter, const void **key, void **value);
+void iter_next_hashmap(IterHashMap *iter, void **key, void **value);
+
+void iter_next_drop_hashmap(IterHashMap *iter, void **key, void **value);
+
+// void iter_next_safe_hashmap(IterHashMap *iter, const void **key, void
+// **value);
 
 int get_longest_chain_base(HashMapBase *map);
 #endif
