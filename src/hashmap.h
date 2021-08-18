@@ -23,10 +23,10 @@
     typedef struct {                                                           \
         HashMapBase *map_base;                                                 \
         struct {                                                               \
-            const key_type *key_t;                                             \
+            key_type *key_t;                                                   \
             data_type *data_t;                                                 \
-            uint64_t (*hash_func_t)(const key_type *);                         \
-            bool (*compare_func_t)(const key_type *, const key_type *);        \
+            uint64_t (*hash_func_t)(key_type *);                               \
+            bool (*compare_func_t)(key_type *, key_type *);                    \
             void (*drop_func_t)(key_type *, data_type *);                      \
         } _data_types;                                                         \
     } name
@@ -98,7 +98,7 @@
         typeof(hashmap->_data_types.key_t) _key = key;                         \
         typeof(hashmap->_data_types.data_t) _value = value;                    \
                                                                                \
-        success = insert_hashmap_base(hashmap->map_base, (const void *)_key,   \
+        success = insert_hashmap_base(hashmap->map_base, (void *)_key,         \
                                       (void *)_value);                         \
     } while (0)
 
@@ -114,8 +114,7 @@
     do {                                                                       \
         typeof(hashmap->_data_types.key_t) _key = key;                         \
                                                                                \
-        contains =                                                             \
-            contains_key_hashmap_base(hashmap->map_base, (const void *)_key);  \
+        contains = contains_key_hashmap_base(hashmap->map_base, (void *)_key); \
     } while (0)
 
 #define get_value_hashmap(hashmap, key, value)                                 \
@@ -178,29 +177,21 @@
  *  a value variable to assign each next value to
  */
 #define for_each(iter, key, value)                                             \
-    iter->prev_entry = NULL;                                                   \
+    iter->current_index = 0;                                                   \
     iter->current_entry = NULL;                                                \
                                                                                \
-    iter->current_index = 0;                                                   \
-    iter->prev_index = 0;                                                      \
-                                                                               \
-    for (iter_next_hashmap(iter, (const void **)&key, (void **)&value);        \
-         iter->current_index < iter->table_size &&                             \
+    for (iter_next_hashmap(iter, (void **)&key, (void **)&value);              \
          iter->current_entry != NULL;                                          \
-         iter_next_hashmap(iter, (const void **)&key, (void **)&value))
+         iter_next_hashmap(iter, (void **)&key, (void **)&value))
 
 /* same as the other for_each but it is safe to remove entrys while iterating */
-#define for_each_safe(iter, key, value)                                        \
-    iter->prev_entry = NULL;                                                   \
+#define for_each_drop(iter, key, value)                                        \
+    iter->current_index = 0;                                                   \
     iter->current_entry = NULL;                                                \
                                                                                \
-    iter->current_index = 0;                                                   \
-    iter->prev_index = 0;                                                      \
-                                                                               \
-    for (iter_next_safe_hashmap(iter, (const void **)&key, (void **)&value);   \
-         iter->current_index < iter->table_size &&                             \
+    for (iter_next_drop_hashmap(iter, (void **)&key, (void **)&value);         \
          iter->current_entry != NULL;                                          \
-         iter_next_safe_hashmap(iter, (const void **)&key, (void **)&value))
+         iter_next_drop_hashmap(iter, (void **)&key, (void **)&value))
 
 #define get_longest_chain(hashmap) get_longest_chain_base(hashmap->map_base);
 
