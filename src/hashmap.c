@@ -502,13 +502,13 @@ void iter_next_drop_hashmap(IterHashMap *iter, void **key, void **value) {
         _iter_next_base(iter);
     }
 
-    free(temp);
-
     if (iter->current_entry == NULL) {
         free(iter->base->table);
         iter->base->table = NULL;
 
         drop_iter_hashmap(iter);
+    } else {
+        free(temp);
     }
 }
 
