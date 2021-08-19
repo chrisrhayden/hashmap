@@ -27,7 +27,11 @@ HashMapBase *init_hashmap_base(HashFunc hash_func, CompFunc comp_func,
         return NULL;
     }
 
-    map->table = calloc(size, sizeof(Entry *));
+    map->table = malloc(sizeof(Entry *) * size);
+
+    for (int i = 0; i < size; ++i) {
+        map->table[i] = NULL;
+    }
 
     if (map->table == NULL) {
         return NULL;
@@ -100,7 +104,7 @@ void drop_hashmap_base(HashMapBase *map) {
  * @param value
  *  a pointer the value
  */
-Entry *create_entry(const void *key, void *value) {
+Entry *create_entry(void *key, void *value) {
     Entry *entry = malloc(sizeof(Entry));
 
     if (entry == NULL) {
@@ -259,7 +263,7 @@ enum HashMapResult rehash_hashmap(HashMapBase *map) {
  * @param value
  *  the new value to be inserted in to the hasmap
  */
-enum HashMapResult insert_hashmap_base(HashMapBase *map, const void *key,
+enum HashMapResult insert_hashmap_base(HashMapBase *map, void *key,
                                        void *value) {
     enum HashMapResult result = Success;
 
@@ -301,7 +305,7 @@ enum HashMapResult insert_hashmap_base(HashMapBase *map, const void *key,
  * @param key
  *  the key to check
  */
-bool contains_key_hashmap_base(HashMapBase *map, const void *key) {
+bool contains_key_hashmap_base(HashMapBase *map, void *key) {
     uint64_t key_hash = map->hash_func(key) & (map->table_size - 1);
 
     bool found = false;
@@ -319,7 +323,7 @@ bool contains_key_hashmap_base(HashMapBase *map, const void *key) {
     return found;
 }
 
-void *get_value_hashmap_base(HashMapBase *map, const void *key) {
+void *get_value_hashmap_base(HashMapBase *map, void *key) {
     uint64_t key_hash = map->hash_func(key) & (map->table_size - 1);
 
     void *value = NULL;
@@ -346,7 +350,7 @@ void *get_value_hashmap_base(HashMapBase *map, const void *key) {
  */
 // TODO: this could probably be improved but will also change a lot if i switch
 // to open addressing
-void *remove_entry_hashmap_base(HashMapBase *map, const void *key) {
+void *remove_entry_hashmap_base(HashMapBase *map, void *key) {
     uint64_t key_hash = map->hash_func(key) & (map->table_size - 1);
 
     bool stop = false;
@@ -415,14 +419,7 @@ IterHashMap *get_iter_hashmap_base(HashMapBase *map) {
     iter->current_index = -1;
     iter->current_entry = NULL;
 
-    // set prev_index to something other then what current_index is being set to
-    // as to not match for the iter_next_safe_hashmap check at the begging
-    iter->prev_index = -2;
-    iter->prev_entry = NULL;
-
-    iter->table_size = map->table_size;
-
-    iter->iter_table = map->table;
+    iter->base = map;
 
     return iter;
 }
@@ -436,7 +433,29 @@ void drop_iter_hashmap(IterHashMap *iter) {
     free(iter);
 }
 
-/** next (unsafe)
+void _iter_next_base(IterHashMap *iter) {
+    // get to the next table index so we dont hit the current entry again
+    ++iter->current_index;
+
+    if (iter->current_index >= iter->base->table_size) {
+        iter->current_entry = NULL;
+    }
+
+    // find the next full bucket
+    while (iter->current_index < iter->base->table_size &&
+           iter->base->table[iter->current_index] == NULL) {
+
+        ++iter->current_index;
+    }
+
+    // set the new current_entry if we are in bounds
+    if (iter->current_index < iter->base->table_size) {
+        // set the new current_entry
+        iter->current_entry = iter->base->table[iter->current_index];
+    }
+}
+
+/** next
  *
  * it is not safe to mutate the table while iterating with this function
  *
@@ -453,99 +472,54 @@ void drop_iter_hashmap(IterHashMap *iter) {
  *   a pointer to another pointer that will hold each new value that gets
  *   iterated over during the for each loop
  */
-void iter_next_hashmap(IterHashMap *iter, const void **key, void **value) {
-    // if current entry is not null then try and get the next Entry from the
-    // linked list
+bool iter_next_hashmap(IterHashMap *iter, void **key, void **value) {
+    bool got_value = false;
+
     if (iter->current_entry) {
-        iter->current_entry = iter->current_entry->next;
-    }
-
-    // if there was nothing in the next spot find the next bucket
-    if (iter->current_entry == NULL) {
-        // get to the next table index so we dont hit the current entry again
-        ++iter->current_index;
-
-        // find the next full bucket
-        while (iter->current_index < iter->table_size &&
-               iter->iter_table[iter->current_index] == NULL) {
-
-            ++iter->current_index;
-        }
-
-        // set the new current_entry if we are in bounds
-        if (iter->current_index < iter->table_size) {
-            // set the new current_entry
-            iter->current_entry = iter->iter_table[iter->current_index];
-        }
-    }
-
-    // if entry is value then set the given ptrs to the current key and value
-    // else do nothing as entry will be empty and thus stop the iteration
-    if (iter->current_entry) {
+        got_value = true;
+        // if entry is value then set the given ptrs to the current key and
+        // value else do nothing as entry will be empty and thus stop the
+        // iteration
         *key = iter->current_entry->key;
 
         *value = iter->current_entry->value;
+
+        if (iter->current_entry->next) {
+            iter->current_entry = iter->current_entry->next;
+        } else {
+            _iter_next_base(iter);
+        }
     }
+
+    return got_value;
 }
 
-/** next (remove safe)
- *
- * this will keep track of a previous entry and make sure that we get to the
- * right entry even if the user deletes an entry, though its not "safe" in any
- * other way
- */
-// NOTE: this is languishing as i dont care about it right now
-void iter_next_safe_hashmap(IterHashMap *iter, const void **key, void **value) {
-    // if there is a previous entry and it has the same index as the current
-    // entry then reset current to the last entry so we get to the right entry
-    // in the next if even if the user removed an entry during iteration
-    //
-    // this is bad and i feel bad
-    if (iter->prev_entry && iter->prev_index == iter->current_index) {
-        iter->current_entry = iter->prev_entry;
-    }
+bool iter_next_drop_hashmap(IterHashMap *iter, void **key, void **value) {
+    bool got_value = false;
 
-    // if current entry is not null then try and get the next Entry from the
-    // linked list
     if (iter->current_entry) {
-        iter->prev_entry = iter->current_entry;
+        got_value = true;
 
-        iter->current_entry = iter->current_entry->next;
-    }
-
-    // if there was nothing in the next spot find the next bucket
-    if (iter->current_entry == NULL) {
-        iter->prev_index = iter->current_index;
-
-        // get to the next table index so we dont hit the current entry again
-        ++iter->current_index;
-
-        // find the next full bucket
-        while (iter->current_index < iter->table_size &&
-               iter->iter_table[iter->current_index] == NULL) {
-
-            ++iter->current_index;
-        }
-
-        // set the new current_entry if we are in bounds
-        //
-        // the last current_entry was from a different bucket so we dont need to
-        // bother with the previous entry, just the index for above
-        if (iter->current_index < iter->table_size) {
-            // set the new current_entry
-            iter->prev_index = iter->current_index;
-
-            iter->current_entry = iter->iter_table[iter->current_index];
-        }
-    }
-
-    // if entry is value then set the given ptrs to the current key and value
-    // else do nothing as entry will be empty and thus stop the iteration
-    if (iter->current_entry) {
         *key = iter->current_entry->key;
 
         *value = iter->current_entry->value;
+
+        Entry *temp = iter->current_entry;
+        iter->current_entry = iter->current_entry->next;
+
+        free(temp);
+
+        if (iter->current_entry == NULL) {
+            _iter_next_base(iter);
+        }
+
+        if (iter->current_entry == NULL) {
+            free(iter->base->table);
+            iter->base->table = NULL;
+        }
     }
+
+    return got_value;
 }
 
 int get_longest_chain_base(HashMapBase *map) {
