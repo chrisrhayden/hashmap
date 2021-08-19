@@ -74,9 +74,11 @@ void *get_value_hashmap_base(HashMapBase *map, void *key);
 IterHashMap *get_iter_hashmap_base(HashMapBase *map);
 void drop_iter_hashmap(IterHashMap *iter);
 
-void iter_next_hashmap(IterHashMap *iter, void **key, void **value);
+void _iter_next_base(IterHashMap *iter);
 
-void iter_next_drop_hashmap(IterHashMap *iter, void **key, void **value);
+bool iter_next_hashmap(IterHashMap *iter, void **key, void **value);
+
+bool iter_next_drop_hashmap(IterHashMap *iter, void **key, void **value);
 
 // void iter_next_safe_hashmap(IterHashMap *iter, const void **key, void
 // **value);
