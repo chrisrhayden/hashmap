@@ -99,28 +99,24 @@ int main() {
     for_each(iter, iter_key, value) {
         contains_key_hashmap(map, iter_key, contains);
 
+        printf("found %c\n", *(char *)iter_key);
         if (contains == false) {
             printf("could not find key\n");
             break;
-        } else {
-            printf("> char is %c \n", *iter_key);
         }
     }
-
-    printf("%c\n", *iter_key);
 
     iter_key = NULL;
     value = NULL;
 
     for_each_drop(iter, iter_key, value) {
-        printf("char %c\n", *iter_key);
+        printf("freed char %c\n", *iter_key);
         free(iter_key);
         free(value);
     }
 
+    drop_iter_hashmap(iter);
     drop_hashmap(map);
-
-    printf(">>>>>>>>>>> \n");
 
     printf("done\n");
 
