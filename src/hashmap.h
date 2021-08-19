@@ -179,19 +179,23 @@
 #define for_each(iter, key, value)                                             \
     iter->current_index = 0;                                                   \
     iter->current_entry = NULL;                                                \
+    _iter_next_base(iter);                                                     \
                                                                                \
-    for (iter_next_hashmap(iter, (void **)&key, (void **)&value);              \
-         iter->current_entry != NULL;                                          \
-         iter_next_hashmap(iter, (void **)&key, (void **)&value))
+    for (bool got_value =                                                      \
+             iter_next_hashmap(iter, (void **)&key, (void **)&value);          \
+         got_value;                                                            \
+         got_value = iter_next_hashmap(iter, (void **)&key, (void **)&value))
 
 /* same as the other for_each but it is safe to remove entrys while iterating */
 #define for_each_drop(iter, key, value)                                        \
-    iter->current_index = 0;                                                   \
+    iter->current_index = -1;                                                  \
     iter->current_entry = NULL;                                                \
+    _iter_next_base(iter);                                                     \
                                                                                \
-    for (iter_next_drop_hashmap(iter, (void **)&key, (void **)&value);         \
-         iter->current_entry != NULL;                                          \
-         iter_next_drop_hashmap(iter, (void **)&key, (void **)&value))
+    for (bool got_value =                                                      \
+             iter_next_drop_hashmap(iter, (void **)&key, (void **)&value);     \
+         got_value; got_value = iter_next_drop_hashmap(iter, (void **)&key,    \
+                                                       (void **)&value))
 
 #define get_longest_chain(hashmap) get_longest_chain_base(hashmap->map_base);
 
